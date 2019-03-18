@@ -1,13 +1,16 @@
 {
-  "description": "xkx reward offers weapp project",
-  "setting": {
-    "urlCheck": true,
-    "es6": false,
-    "postcss": false,
-    "minified": false
-  },
-  "compileType": "miniprogram",
-  "appid": "wx56b3efb602e3839d",
-  "projectname": "xkx_reward_offers_weapp",
-  "miniprogramRoot": "./dist"
+	"description": "xkx reward offers weapp project",
+	"setting": {
+		"urlCheck": false,
+		"es6": false,
+		"postcss": false,
+		"minified": false,
+		"newFeature": true,
+		"autoAudits": false
+	},
+	"compileType": "miniprogram",
+	"appid": "wx56b3efb602e3839d",
+	"projectname": "xkx_reward_offers_weapp",
+	"miniprogramRoot": "dist/",
+	"condition": {}
 }
