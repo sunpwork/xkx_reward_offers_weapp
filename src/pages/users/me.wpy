@@ -1,0 +1,127 @@
+<style lang="less">
+    .avatar-wrap {
+        position: relative;
+        margin-right: 10px;
+    }
+    .avatar {
+        width: 50px;
+        height: 50px;
+        display: block;
+        border-radius: 50%;
+    }
+    .logout {
+        margin-top: 30px;
+    }
+    .introduction {
+        font-size: 13px;
+        color: #888888;
+    }
+</style>
+<template>
+    <view class="page">
+        <view class="page__bd">
+            <view class="weui-cells weui-cells_after-title">
+                <!-- 已登录 -->
+                <navigator class="weui-cell" wx:if="{{ user }}" url="/pages/users/edit">
+                    <view class="weui-cell__hd avatar-wrap">
+                        <image class="avatar" src="{{ user.avatar }}" />
+                    </view>
+                    <view class="weui-cell__bd">
+                        <view>{{ user.name }}</view>
+                        <view class="page__desc">{{ user.introduction || '' }}</view>
+                    </view>
+                    <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+                </navigator>
+                <!-- 未登录 -->
+                <button class="weui-cell" wx:else open-type="getUserInfo" bindgetuserinfo="bindGetUserInfo">
+              <view class="weui-cell__hd avatar-wrap">
+                <image src="/images/user.png" class="avatar" />
+              </view>
+              <view class="weui-cell__bd">
+                <view>未登录</view>
+              </view>
+              <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </button>
+                <!-- <navigator class="weui-cell weui-cell_access" url="{{ user ? '/pages/notifications/index' : '' }}">
+              <view class="weui-cell__bd" url="">
+                <view class="weui-cell__bd">
+                  <view style="display: inline-block; vertical-align: middle">我的消息</view>
+                  <view class="weui-badge" style="margin-left: 5px;" wx:if="{{ unreadCount }}">{{ unreadCount }}</view>
+                </view>
+              </view>
+              <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+            </navigator> -->
+                <navigator class="weui-cell weui-cell_access" url="{{ user ? '/pages/topics/userIndex?user_id='+user.id : '' }}">
+                    <view class="weui-cell__bd" url="">
+                        <view class="weui-cell__bd">我的话题</view>
+                    </view>
+                    <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+                </navigator>
+                <navigator class="weui-cell weui-cell_access" url="{{ user? '/pages/replies/userIndex?user_id='+user.id : '' }}">
+                    <view class="weui-cell__bd" url="">
+                        <view class="weui-cell__bd">我的回复</view>
+                    </view>
+                    <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+                </navigator>
+            </view>
+            <view class="page__bd page__bd_spacing logout">
+                <button class="weui-btn" type="warn" wx:if="{{ user }}" @tap="logout">退出登录</button>
+            </view>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    //   import unreadCount from '@/mixins/unreadCount'
+    export default class UserMe extends wepy.page {
+      config = {
+        navigationBarTitleText: '我的'
+      }
+      data = {
+            // 用户信息
+        user: null
+      }
+      async onLoad() {
+        this.user = await this.$parent.getCurrentUser()
+        this.$apply()
+      }
+      async onShow() {
+    
+      }
+      methods = {
+            // 退出
+        async bindGetUserInfo(e) {
+          if (e.detail.userInfo) {
+            let userInfo = e.detail.userInfo
+            let param = {
+              'name': userInfo.nickName,
+              'avatar': userInfo.avatarUrl
+            }
+            switch (userInfo.gender) {
+              case 0:
+                param['gender'] = 'secret'
+                break
+              case 1:
+                param['gender'] = 'male'
+                break
+              case 2:
+                param['gender'] = 'female'
+                break
+            }
+            try {
+              await api.login(param)
+              this.onLoad()
+            } catch (err) {
+              console.log(err)
+              wepy.showModel({
+                title: '提示',
+                content: '服务器错误，请联系管理员'
+              })
+            }
+          }
+        }
+      }
+    }
+</script>

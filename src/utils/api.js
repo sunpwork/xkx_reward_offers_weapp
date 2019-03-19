@@ -1,4 +1,5 @@
 import wepy from 'wepy'
+import 'wepy-async-function'
 
 const host = 'http://xkx-reward-offers.test/api'
 
@@ -48,7 +49,66 @@ const login = async (params = {}) => {
   return authResponse
 }
 
-export default{
+// 获取token
+const getToken = async (options) => {
+  let accessToken = wepy.getStorageSync('access_token')
+  let expiredAt = wepy.getStorageSync('access_token_expired_at')
+
+    // 如果token过期了，则调用刷新方法
+  if (accessToken && new Date().getTime() > expiredAt) {
+    let refreshResponse = await refreshToken(accessToken)
+        // 刷新成功
+    if (refreshResponse.statusCode === 200) {
+      accessToken = refreshResponse.data.access_token
+    } else {
+      let authResponse = await login()
+      if (authResponse.statusCode === 201) {
+        accessToken = authResponse.data.access_token
+      }
+    }
+  }
+  return accessToken
+}
+
+// 刷新token
+const refreshToken = async (accessToken) => {
+  let refreshResponse = await wepy.request({
+    url: host + '/' + 'authorizations/current',
+    method: 'PUT',
+    header: {
+      'Authorization': 'Bearer ' + accessToken
+    }
+  })
+    // 刷新成功
+  if (refreshResponse.statusCode === 200) {
+        // 存储新的token
+    wepy.setStorageSync('access_token', refreshResponse.data.access_token)
+    wepy.setStorageSync('access_token_expired_at', new Date().getTime() + refreshResponse.data.expires_in * 1000)
+  }
+  return refreshResponse
+}
+
+// 带身份认证的请求
+const authRequest = async (options, showLoading = true) => {
+  if (typeof options === 'string') {
+    options = {
+      url: options
+    }
+  }
+    // 获取Token
+  let accessToken = await getToken()
+
+    // 将Token 设置在header中
+  let header = options.header || {}
+  header.Authorization = 'Bearer ' + accessToken
+  options.header = header
+
+  return request(options, showLoading)
+}
+
+export default {
   request,
-  login
+  login,
+  authRequest,
+  refreshToken
 }

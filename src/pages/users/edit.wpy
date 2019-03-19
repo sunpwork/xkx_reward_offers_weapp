@@ -1,0 +1,178 @@
+<style lang="less">
+    .avatar {
+        width: 80px;
+        height: 80px;
+        display: block;
+        border-radius: 50%;
+    }
+    .avatar-wrap {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .introduction {
+        height: 3.3em;
+    }
+    .error-message {
+        color: #e64340;
+    }
+</style>
+<template>
+    <view class="page">
+        <view class="page__bd">
+            <form bindsubmit="submit">
+                <view class="avatar-wrap">
+                    <image class="avatar" src="{{ user.avatar}}" @tap="updateAvatar" />
+                </view>
+                <!-- 填写姓名 -->
+                <view class="weui-cells__title">姓名</view>
+                <view class="weui-cells weui-cells_after-title">
+                    <view class="weui-cell weui-cell_input">
+                        <view class="weui-cell__bd">
+                            <input class="weui-input" placeholder="请输入姓名" name="name" value="{{ user.name }}" />
+                        </view>
+                        <view wx:if="{{ errors.name }}" class="weui-cell__ft">
+                            <icon type="warn" size="23" color="#E64340"></icon>
+                        </view>
+                    </view>
+                </view>
+                <!-- 姓名错误信息 -->
+                <view wx:if="{{ errors.name }}" class="weui-cells__tips error-message">{{ errors.name[0] }}</view>
+                <!-- 选择性别 -->
+                <view class="weui-cells__title">性别</view>
+                <view class="weui-cells weui-cells_after-title">
+                    <radio-group @change="radioChange">
+                        <label class="weui-cell weui-check__label" wx:for="{{genderItems}}" wx:key="value">
+                            <radio class="weui-check" value="{{item.value}}" checked="{{item.checked}}"/>
+                            <view class="weui-cell__bd">{{item.name}}</view>
+                            <view class="weui-cell__ft weui-cell__ft_in-radio" wx:if="{{item.checked}}">
+                                <icon class="weui-icon-radio" type="success_no_circle" size="16"></icon>
+                            </view>
+                        </label>
+                    </radio-group>                    
+                </view>
+                <!-- 提交表单 -->
+                <view class="weui-btn-area">
+                    <button class="weui-btn" type="primary" formType="submit">修改</button>
+                </view>
+            </form>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    export default class UserEdit extends wepy.page {
+      config = {
+        navigationBarTitleText: '修改个人信息'
+      };
+      data = {
+        user: null,
+        errors: null,
+        avatar: 0,
+        gender: null,
+        genderItems: [{
+          name: '男',
+          value: 'male',
+          checked: false
+        },
+        {
+          name: '女',
+          value: 'female',
+          checked: false
+        },
+        {
+          name: '保密',
+          value: 'secret',
+          checked: false
+        }
+        ]
+      };
+      async onShow() {
+        this.user = await this.$parent.getCurrentUser()
+        this.genderItems.forEach(item => {
+          if (item.value === this.user.gender) {
+            item.checked = true
+          }
+        })
+        this.$apply()
+      }
+      async submit(e) {
+        this.errors = null
+        try {
+          let formData = e.detail.value
+          if (this.avatarId !== 0) {
+            formData.avatar_image_id = this.avatarId
+          }
+          let editResponse = await api.authRequest({
+            url: 'user',
+            method: 'PUT',
+            data: formData
+          })
+                // 表单错误
+          if (editResponse.statusCode === 422) {
+            this.errors = editResponse.data.errors
+            this.$apply()
+          }
+                // 更新成功
+          if (editResponse.statusCode === 200) {
+            this.user = editResponse.data
+            wepy.setStorageSync('user', editResponse.data)
+            this.$apply()
+            wepy.showToast({
+              title: '修改成功',
+              icon: 'success',
+              duration: 2000
+            })
+          }
+        } catch (err) {
+          console.log(err)
+          wepy.showModal({
+            title: '提示',
+            content: '服务器错误，请联系管理员'
+          })
+        }
+      }
+      methods = {
+        radioChange(e) {
+          console.log('radio发生change事件，携带value值为：', e.detail.value)
+          this.genderItems.forEach(v => {
+            v.checked = v.value === e.detail.value
+          })
+          this.gender = e.detail.value
+        },
+        async updateAvatar() {
+          let image = await wepy.chooseImage({
+            count: 1
+          })
+          try {
+            let avatar = image.tempFilePaths[0]
+                    // 调用上传接口
+            let imageResponse = await api.updateFile({
+              url: 'images',
+              method: 'POST',
+              name: 'image',
+              formData: {
+                type: 'avatar'
+              },
+              filePath: avatar
+            })
+                    // 上传成功
+            if (imageResponse.statusCode === 201) {
+              let responseData = JSON.parse(imageResponse.data)
+              this.user.avatar = responseData.path
+              this.avatarId = responseData.id
+              this.$apply()
+            }
+          } catch (err) {
+            console.log(err)
+            wepy.showModal({
+              title: '提示',
+              content: '服务器错误，请联系管理员'
+            })
+          }
+        }
+      };
+    }
+</script>
