@@ -1,58 +1,53 @@
-<style lang="less">
-    .avatar {
-        width: 80px;
-        height: 80px;
-        display: block;
-        border-radius: 50%;
-    }
-    .avatar-wrap {
-        margin-top: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .introduction {
-        height: 3.3em;
-    }
-    .error-message {
-        color: #e64340;
-    }
+<style>
+  .avatar-wrap {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .avatar {
+    width: 80px;
+    height: 80px;
+    display: block;
+    border-radius: 50%;
+  }
 </style>
+
+
 <template>
-    <view class="page">
-        <view class="page__bd">
-            <view class="weui-cells weui-cells_after-title">
-                <navigator bindtap="updateAvatar" url="" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
-                    <view class="weui-cell__bd">头像</view>
-                    <view class="weui-cell__ft weui-cell__ft_in-access">
-                        <image style="width: 40px; height: 40px;" class="avatar" src="{{ user.avatar }}" />
-                    </view>
-                </navigator>
-                <navigator url="" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
-                    <view class="weui-cell__bd">姓名</view>
-                    <view class="weui-cell__ft weui-cell__ft_in-access">{{user.name}}</view>
-                </navigator>
-                <picker @change="bindGenderChange" value="{{genderIndex}}" range="{{genderItems}}" range-key='name'>
-                    <navigator url="" class="weui-cell weui-cell_access" hover-class="weui-cell_active">
-                        <view class="weui-cell__bd">性别</view>
-                        <view class="weui-cell__ft weui-cell__ft_in-access">{{genderItems[genderIndex]['name']}}</view>
-                    </navigator>
-                </picker>
-            </view>
-        </view>
+  <wux-dialog id="wux-dialog" />
+  <wux-dialog id="wux-dialog--alert" />
+  <view class="page">
+    <view class="page__bd">
+      <view class="avatar-wrap">
+        <image class="avatar" src="{{ user.avatar }}" />
+      </view>
+      <wux-cell-group title="用户信息" label="">
+        <wux-cell @top="updateNamePrompt" title="姓名" is-link extra="{{ user.name }}"></wux-cell>
+        <wux-cell title="性别" is-link extra="{{ user.gender_diff }}"></wux-cell>
+      </wux-cell-group>
     </view>
+  </view>
 </template>
 <script>
-    import wepy from 'wepy'
-    import api from '@/utils/api'
-    export default class UserEdit extends wepy.page {
-      config = {
-        navigationBarTitleText: '修改个人信息'
-      };
-      data = {
-        user: null,
-        genderIndex: 0,
-        genderItems: [{
+  import wepy from 'wepy'
+  import api from '@/utils/api'
+  import {
+    $wuxDialog
+  } from '@/wux/index'
+  export default class UserEdit extends wepy.page {
+    config = {
+      navigationBarTitleText: '修改个人信息',
+      usingComponents: {
+        'wux-cell-group': '../../wux/cell-group/index',
+        'wux-cell': '../../wux/cell/index',
+        'wux-dialog': '../../wux/dialog/index'
+      }
+    };
+    data = {
+      user: null,
+      genderIndex: 0,
+      genderItems: [{
           'value': 'secret',
           'name': '保密'
         }, {
@@ -63,54 +58,77 @@
           'value': 'female',
           'name': '女'
         }
-        ]
-      };
-      async onShow() {
-        this.user = await this.$parent.getCurrentUser()
-        this.genderItems.forEach((item, index) => {
-          if (item.value === this.user.gender) {
-            this.user.gender_diff = item.name
-            this.genderIndex = index
+      ]
+    };
+    async onShow() {
+      this.user = await this.$parent.getCurrentUser()
+      this.genderItems.forEach((item, index) => {
+        if (item.value === this.user.gender) {
+          this.user.gender_diff = item.name
+          this.genderIndex = index
+        }
+      })
+      this.$apply()
+    }
+    methods = {
+      async updateAvatar() {
+        let image = await wepy.chooseImage({
+          count: 1
+        })
+        try {
+          let avatar = image.tempFilePaths[0]
+          // 调用上传接口
+          let imageResponse = await api.updateFile({
+            url: 'images',
+            method: 'POST',
+            name: 'image',
+            formData: {
+              type: 'avatar'
+            },
+            filePath: avatar
+          })
+          // 上传成功
+          if (imageResponse.statusCode === 201) {
+            let responseData = JSON.parse(imageResponse.data)
+            this.user.avatar = responseData.path
+            this.avatarId = responseData.id
+            this.$apply()
+          }
+        } catch (err) {
+          console.log(err)
+          wepy.showModal({
+            title: '提示',
+            content: '服务器错误，请联系管理员'
+          })
+        }
+      },
+      // bindGenderChange(e) {
+      //   console.log('picker sex code 发生选择改变，携带值为', e.detail.value)
+      //   this.genderIndex = e.detail.value
+      // },
+      updateNamePrompt() {
+        const alert = (content) => {
+          $wuxDialog('#wux-dialog--alert').alert({
+            resetOnClose: true,
+            title: '提示',
+            content: content
+          })
+        }
+        $wuxDialog().prompt({
+          resetOnClose: true,
+          title: '修改昵称',
+          content: '',
+          fieldtype: 'text',
+          password: false,
+          defaultText: this.user.name,
+          placeholder: '请输入姓名',
+          maxlength: 8,
+          onConfirm(e, response) {
+            // const content = response.length === 8 ? `Wi-Fi密码到手了: ${response}` : `请输入正确的Wi-Fi密码`
+            // alert(content)
           }
         })
-        this.$apply()
-      }
-      methods = {
-        async updateAvatar() {
-          let image = await wepy.chooseImage({
-            count: 1
-          })
-          try {
-            let avatar = image.tempFilePaths[0]
-                    // 调用上传接口
-            let imageResponse = await api.updateFile({
-              url: 'images',
-              method: 'POST',
-              name: 'image',
-              formData: {
-                type: 'avatar'
-              },
-              filePath: avatar
-            })
-                    // 上传成功
-            if (imageResponse.statusCode === 201) {
-              let responseData = JSON.parse(imageResponse.data)
-              this.user.avatar = responseData.path
-              this.avatarId = responseData.id
-              this.$apply()
-            }
-          } catch (err) {
-            console.log(err)
-            wepy.showModal({
-              title: '提示',
-              content: '服务器错误，请联系管理员'
-            })
-          }
-        },
-        bindGenderChange(e) {
-          console.log('picker sex code 发生选择改变，携带值为', e.detail.value)
-          this.genderIndex = e.detail.value
-        }
       }
     }
+  }
 </script>
