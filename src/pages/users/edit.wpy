@@ -16,15 +16,16 @@
 
 <template>
   <wux-dialog id="wux-dialog" />
-  <wux-dialog id="wux-dialog--alert" />
+  <wux-select id="wux-select--userGender" />
   <view class="page">
     <view class="page__bd">
       <view class="avatar-wrap">
         <image class="avatar" src="{{ user.avatar }}" />
       </view>
       <wux-cell-group title="用户信息" label="">
-        <wux-cell @top="updateNamePrompt" title="姓名" is-link extra="{{ user.name }}"></wux-cell>
-        <wux-cell title="性别" is-link extra="{{ user.gender_diff }}"></wux-cell>
+        <wux-cell bind:click="updateNamePrompt" title="姓名" is-link extra="{{ user.name }}"></wux-cell>
+        <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ user.gender_diff }}"></wux-cell>
+        <wux-cell bind:click="" title="手机号" is-link extra="{{ user.tel ? user.tel : '绑定手机号' }}"></wux-cell>
       </wux-cell-group>
     </view>
   </view>
@@ -35,36 +36,39 @@
   import {
     $wuxDialog
   } from '@/wux/index'
+    import {
+    $wuxSelect
+  } from '@/wux/index'
   export default class UserEdit extends wepy.page {
     config = {
       navigationBarTitleText: '修改个人信息',
       usingComponents: {
         'wux-cell-group': '../../wux/cell-group/index',
         'wux-cell': '../../wux/cell/index',
-        'wux-dialog': '../../wux/dialog/index'
+        'wux-dialog': '../../wux/dialog/index',
+        'wux-select': '../../wux/select/index'
       }
     };
     data = {
       user: null,
-      genderIndex: 0,
       genderItems: [{
           'value': 'secret',
-          'name': '保密'
+          'title': '保密'
         }, {
           'value': 'male',
-          'name': '男'
+          'title': '男'
         },
         {
           'value': 'female',
-          'name': '女'
+          'title': '女'
         }
-      ]
+      ],
     };
     async onShow() {
       this.user = await this.$parent.getCurrentUser()
       this.genderItems.forEach((item, index) => {
         if (item.value === this.user.gender) {
-          this.user.gender_diff = item.name
+          this.user.gender_diff = item.title
           this.genderIndex = index
         }
       })
@@ -107,13 +111,13 @@
       //   this.genderIndex = e.detail.value
       // },
       updateNamePrompt() {
-        const alert = (content) => {
-          $wuxDialog('#wux-dialog--alert').alert({
-            resetOnClose: true,
-            title: '提示',
-            content: content
-          })
-        }
+        // const alert = (content) => {
+        //   $wuxDialog('#wux-dialog--updateUserName').alert({
+        //     resetOnClose: true,
+        //     title: '提示',
+        //     content: content
+        //   })
+        // }
         $wuxDialog().prompt({
           resetOnClose: true,
           title: '修改昵称',
@@ -127,6 +131,20 @@
             // const content = response.length === 8 ? `Wi-Fi密码到手了: ${response}` : `请输入正确的Wi-Fi密码`
             // alert(content)
           }
+        })
+      },
+      updateGenderSelect(){
+        $wuxSelect('#wux-select--userGender').open({
+            value: this.user.gender,
+            options: this.genderItems,
+            onConfirm: (value, index, options) => {
+                console.log('onConfirm', value, index, options)
+                if (index !== -1) {
+                  this.user.gender_diff = options[index].title,
+                  this.user.gender = value
+                  this.$apply()               
+                }
+            },
         })
       }
     }
