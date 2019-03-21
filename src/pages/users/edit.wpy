@@ -1,31 +1,13 @@
-<style>
-  .avatar-wrap {
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .avatar {
-    width: 80px;
-    height: 80px;
-    display: block;
-    border-radius: 50%;
-  }
-</style>
-
-
 <template>
   <wux-dialog id="wux-dialog" />
   <wux-select id="wux-select--userGender" />
   <view class="page">
     <view class="page__bd">
-      <view class="avatar-wrap">
-        <image class="avatar" src="{{ user.avatar }}" />
-      </view>
-      <wux-cell-group title="用户信息" label="">
+      <wux-cell-group title="个人信息" label="">
         <wux-cell bind:click="updateNamePrompt" title="姓名" is-link extra="{{ user.name }}"></wux-cell>
         <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ user.gender_diff }}"></wux-cell>
-        <wux-cell bind:click="" title="手机号" is-link extra="{{ user.tel ? user.tel : '绑定手机号' }}"></wux-cell>
+        <wux-cell bind:click="" title="手机号" is-link extra="{{ user.phone ? user.phone : '绑定手机号' }}" 
+        open-type="{{ user.phone ? '' : 'getPhoneNumber' }}" bindgetphonenumber="{{ user.phone ? '' : 'bindGetPhoneNumber'}}"></wux-cell>
       </wux-cell-group>
     </view>
   </view>
@@ -36,7 +18,7 @@
   import {
     $wuxDialog
   } from '@/wux/index'
-    import {
+  import {
     $wuxSelect
   } from '@/wux/index'
   export default class UserEdit extends wepy.page {
@@ -133,19 +115,33 @@
           }
         })
       },
-      updateGenderSelect(){
+      updateGenderSelect() {
         $wuxSelect('#wux-select--userGender').open({
-            value: this.user.gender,
-            options: this.genderItems,
-            onConfirm: (value, index, options) => {
-                console.log('onConfirm', value, index, options)
-                if (index !== -1) {
-                  this.user.gender_diff = options[index].title,
-                  this.user.gender = value
-                  this.$apply()               
-                }
-            },
+          value: this.user.gender,
+          options: this.genderItems,
+          onConfirm: (value, index, options) => {
+            console.log('onConfirm', value, index, options)
+            if (index !== -1) {
+              this.user.gender_diff = options[index].title,
+                this.user.gender = value
+              this.$apply()
+            }
+          },
         })
+      },
+      async bindGetPhoneNumber(e) {
+        if (e.detail.encryptedData && e.detail.iv) {
+          let result = await api.authRequest({
+            url: 'weapp/users/bindPhoneNumber',
+            method: 'PUT',
+            data: {
+              encryptedData: e.detail.encryptedData,
+              iv: e.detail.iv
+            }
+          })
+          this.user = result.data.data
+          this.$apply()
+        }
       }
     }
   }
