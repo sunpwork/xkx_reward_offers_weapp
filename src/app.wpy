@@ -1,34 +1,34 @@
 <style lang="less">
-@import 'style/weui.less';
-page{
-  background-color: #F8F8F8;
-  font-size: 16px;
-}
-.page__hd {
-  padding: 40px;
-}
-.page__bd {
-  padding-bottom: 40px;
-}
-.page__bd_spacing {
-  padding-left: 15px;
-  padding-right: 15px;
-}
-.page__ft{
-  padding-bottom: 10px;
-  text-align: center;
-}
-.page__title {
-  text-align: left;
-  font-size: 20px;
-  font-weight: 400;
-}
-.page__desc {
-  margin-top: 5px;
-  color: #888888;
-  text-align: left;
-  font-size: 14px;
-}
+  @import 'style/weui.less';
+  page {
+    background-color: #F8F8F8;
+    font-size: 16px;
+  }
+  .page__hd {
+    padding: 40px;
+  }
+  .page__bd {
+    padding-bottom: 40px;
+  }
+  .page__bd_spacing {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .page__ft {
+    padding-bottom: 10px;
+    text-align: center;
+  }
+  .page__title {
+    text-align: left;
+    font-size: 20px;
+    font-weight: 400;
+  }
+  .page__desc {
+    margin-top: 5px;
+    color: #888888;
+    text-align: left;
+    font-size: 14px;
+  }
 </style>
 
 <script>
@@ -38,9 +38,11 @@ page{
   export default class extends wepy.app {
     config = {
       pages: [
-        'pages/index',
+        'pages/position/index',
+        'pages/position/show',
         'pages/users/me',
-        'pages/users/edit'
+        'pages/users/edit',
+        'pages/apply/create',
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -50,7 +52,7 @@ page{
       },
       tabBar: {
         list: [{
-          pagePath: 'pages/index',
+          pagePath: 'pages/position/index',
           text: '首页',
           iconPath: 'images/index.png',
           selectedIconPath: 'images/index_selected.png'
@@ -73,7 +75,6 @@ page{
       this.use('promisify')
     }
     async onLaunch() {
-  
     }
     async getCurrentUser() {
       if (!this.checkLogin()) {
@@ -102,5 +103,5 @@ page{
     checkLogin() {
       return (wepy.getStorageSync('access_token') !== '')
     }
-}
+  }
 </script>

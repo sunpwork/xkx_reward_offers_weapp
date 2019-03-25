@@ -1,0 +1,224 @@
+<template>
+    <wux-dialog id="wux-dialog" />
+    <wux-dialog id="wux-dialog--alert" />
+    <wux-select id="wux-select--userGender" />
+    <view class="page">
+        <view class="page__bd">
+            <wux-wing-blank size="default">
+                <wux-cell-group title="个人信息" label="">
+                    <wux-cell bind:click="updateNamePrompt" title="真实姓名" is-link extra="{{ applyInfo.name }}"></wux-cell>
+                    <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ applyInfo.gender_diff }}"></wux-cell>
+                    <wux-cell bind:click="" title="手机号" is-link extra="{{ applyInfo.phone ? applyInfo.phone : '绑定手机号' }}" open-type="{{ applyInfo.phone ? '' : 'getPhoneNumber' }}" bindgetphonenumber="{{ applyInfo.phone ? '' : 'bindGetPhoneNumber'}}" bind:click="{{ applyInfo.phone ? 'updatePhonePrompt' : ''}}">
+                    </wux-cell>
+                </wux-cell-group>
+                <wux-button bind:click="submit" block type="balanced">提交</wux-button>
+            </wux-wing-blank>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    import {
+        $wuxDialog,
+        $wuxSelect
+    } from '@/wux/index'
+    export default class ApplyEdit extends wepy.page {
+        config = {
+            navigationBarTitleText: '报名兼职',
+            usingComponents: {
+                'wux-cell-group': '../../wux/cell-group/index',
+                'wux-cell': '../../wux/cell/index',
+                'wux-dialog': '../../wux/dialog/index',
+                'wux-select': '../../wux/select/index',
+                'wux-button': '../../wux/button/index',
+                'wux-wing-blank': '../../wux/wing-blank/index'
+            }
+        };
+        data = {
+            positionId: null,
+            applyInfo: {},
+            genderItems: [{
+                    'value': 'male',
+                    'title': '男'
+                },
+                {
+                    'value': 'female',
+                    'title': '女'
+                }
+            ],
+        };
+        async onLoad(options) {
+            if (!options.position_id) {
+                wepy.navigateBack()
+            }
+            this.positionId = options.position_id
+            let user = await this.$parent.getCurrentUser()
+            if (!user) {
+                wepy.switchTab({
+                    url: '/pages/users/me',
+                })
+            } else {
+                this.applyInfo.name = user.name
+                this.applyInfo.gender = user.gender
+                this.applyInfo.phone = user.phone
+                this.genderItems.forEach((item, index) => {
+                    if (item.value === user.gender) {
+                        this.applyInfo.gender_diff = item.title
+                        this.genderIndex = index
+                    }
+                })
+                this.$apply()
+            }
+        }
+        methods = {
+            async updateNamePrompt() {
+                let _this = this
+                $wuxDialog().prompt({
+                    resetOnClose: true,
+                    title: '修改昵称',
+                    content: '',
+                    fieldtype: 'text',
+                    password: false,
+                    defaultText: this.applyInfo.name,
+                    placeholder: '请输入姓名',
+                    maxlength: 8,
+                    onConfirm(e, response) {
+                        _this.applyInfo.name = response
+                        _this.$apply()
+                    }
+                })
+            },
+            async updatePhonePrompt() {
+                let _this = this
+                const verificationCodePrompt = async(verificationKey) => {
+                    $wuxDialog('#wux-dialog--alert').prompt({
+                        resetOnClose: true,
+                        title: '输入验证码',
+                        content: '',
+                        fieldtype: 'text',
+                        password: false,
+                        placeholder: '请输入收到的验证码',
+                        maxlength: 6,
+                        async onConfirm(e, response) {
+                            let checkResponse = await api.authRequest({
+                                url: 'verificationCodes/check',
+                                method: 'PUT',
+                                data: {
+                                    'verification_key': verificationKey,
+                                    'verification_code': response
+                                }
+                            })
+                            if (checkResponse.statusCode === 200) {
+                                _this.applyInfo.phone = checkResponse.data.phone
+                                _this.$apply()
+                            }
+                        }
+                    })
+                }
+                $wuxDialog().prompt({
+                    resetOnClose: true,
+                    title: '修改手机号',
+                    content: '',
+                    fieldtype: 'text',
+                    password: false,
+                    defaultText: this.applyInfo.phone,
+                    placeholder: '请输入手机号',
+                    maxlength: 11,
+                    async onConfirm(e, response) {
+                        try {
+                            let verificationCodeResponse = await api.authRequest({
+                                url: 'verificationCodes',
+                                method: 'POST',
+                                data: {
+                                    'phone': response
+                                }
+                            })
+                            if (verificationCodeResponse.statusCode === 201) {
+                                await verificationCodePrompt(verificationCodeResponse.data.key)
+                            }
+                        } catch (err) {
+                            console.log(err)
+                            wepy.showModal({
+                                title: '提示',
+                                content: '服务器错误，请联系管理员'
+                            })
+                        }
+                    }
+                })
+            },
+            async updateGenderSelect() {
+                $wuxSelect('#wux-select--userGender').open({
+                    value: this.applyInfo.gender,
+                    options: this.genderItems,
+                    onConfirm: async(value, index, options) => {
+                        console.log('onConfirm', value, index, options)
+                        if (index !== -1) {
+                            this.applyInfo.gender_diff = options[index].title
+                            this.genderIndex = index
+                            this.applyInfo.gender = value
+                            this.$apply()
+                        }
+                    },
+                })
+            },
+            async bindGetPhoneNumber(e) {
+                if (e.detail.encryptedData && e.detail.iv) {
+                    try {
+                        let bindResponse = await api.authRequest({
+                            url: 'weapp/user/bindPhoneNumber',
+                            method: 'PUT',
+                            data: {
+                                encryptedData: e.detail.encryptedData,
+                                iv: e.detail.iv
+                            }
+                        })
+                        if (bindResponse.statusCode === 200) {
+                            let user = bindResponse.data.data
+                            wepy.setStorageSync('user', user)
+                            this.applyInfo.phone = user.phone
+                            this.$apply()
+                        }
+                    } catch (err) {
+                        console.log(err)
+                        wepy.showModal({
+                            title: '提示',
+                            content: '服务器错误，请联系管理员'
+                        })
+                    }
+                }
+            },
+            async submit() {
+                if (!this.applyInfo.name || !this.applyInfo.gender || !this.applyInfo.phone) {
+                    wepy.showModal({
+                        title: '提示',
+                        content: '请填写完整信息'
+                    })
+                    return
+                }
+                try {
+                    let submitResponse = await api.authRequest({
+                        url: 'positions/' + this.positionId + '/apply_records',
+                        method: 'POST',
+                        data: this.applyInfo
+                    })
+                    if (submitResponse.statusCode === 201) {
+                        wepy.showToast({
+                            title: '提交成功',
+                            icon: 'success'
+                        })
+                        setTimeout(function() {
+                            wepy.navigateBack()
+                        }, 2000)
+                    }
+                } catch (err) {
+                    console.log(err)
+                    wepy.showModal({
+                        title: '提示',
+                        content: '服务器错误，请联系管理员'
+                    })
+                }
+            }
+        }
+    }
+</script>

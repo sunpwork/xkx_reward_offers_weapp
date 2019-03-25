@@ -6,47 +6,47 @@
 /* global define */
 
 (function() {
-  'use strict'
+    'use strict';
 
-  var hasOwn = {}.hasOwnProperty
+    var hasOwn = {}.hasOwnProperty;
 
-  function classNames() {
-    var classes = []
+    function classNames() {
+        var classes = [];
 
-    for (var i = 0; i < arguments.length; i++) {
-      var arg = arguments[i]
-      if (!arg) continue
+        for (var i = 0; i < arguments.length; i++) {
+            var arg = arguments[i];
+            if (!arg) continue;
 
-      var argType = typeof arg
+            var argType = typeof arg;
 
-      if (argType === 'string' || argType === 'number') {
-        classes.push(arg)
-      } else if (Array.isArray(arg) && arg.length) {
-        var inner = classNames.apply(null, arg)
-        if (inner) {
-          classes.push(inner)
+            if (argType === 'string' || argType === 'number') {
+                classes.push(arg);
+            } else if (Array.isArray(arg) && arg.length) {
+                var inner = classNames.apply(null, arg);
+                if (inner) {
+                    classes.push(inner);
+                }
+            } else if (argType === 'object') {
+                for (var key in arg) {
+                    if (hasOwn.call(arg, key) && arg[key]) {
+                        classes.push(key);
+                    }
+                }
+            }
         }
-      } else if (argType === 'object') {
-        for (var key in arg) {
-          if (hasOwn.call(arg, key) && arg[key]) {
-            classes.push(key)
-          }
-        }
-      }
+
+        return classes.join(' ');
     }
 
-    return classes.join(' ')
-  }
-
-  if (typeof module !== 'undefined' && module.exports) {
-    classNames.default = classNames
-    module.exports = classNames
-  } else if (typeof define === 'function' && typeof define.amd === 'object' && define.amd) {
+    if (typeof module !== 'undefined' && module.exports) {
+        classNames.default = classNames;
+        module.exports = classNames;
+    } else if (typeof define === 'function' && typeof define.amd === 'object' && define.amd) {
         // register as 'classnames', consistent with npm package name
-    define('classnames', [], function() {
-      return classNames
-    })
-  } else {
-    window.classNames = classNames
-  }
-}())
+        define('classnames', [], function() {
+            return classNames;
+        });
+    } else {
+        window.classNames = classNames;
+    }
+}());

@@ -1,0 +1,177 @@
+<template>
+    <wux-fab-button position="bottomRight" theme="balanced" direction="horizontal" buttons="{{buttons}}" bind:click="fabButtonOnClick" />
+    <view class="page">
+        <view class="page__bd">
+            <view class="weui-panel">
+                <view class="weui-panel__bd">
+                    <view class="weui-media-box weui-media-box_text">
+                        <view class="weui-media-box__title weui-media-box__title_in-text">{{ position.title }}</view>
+                        <view class="weui-media-box__desc">{{ position.detail_info }}</view>
+                        <image src="{{ position.covers }}" />
+                        <view class="weui-media-box__info">
+                            <view class="weui-media-box__info__meta">{{ position.created_at_diff }} • </view>
+                            <view class="weui-media-box__info__meta">{{ position.apply_quantity }}人已报名</view>
+                        </view>
+                    </view>
+                </view>
+            </view>
+            <wux-white-space size="default" />
+            <view class="weui-cells weui-cells_after-title">
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">联系人</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" placeholder="{{ position.contact_man }}" disabled />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">招聘人数</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" placeholder="{{ position.quantity }}" disabled />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">薪资</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" placeholder="{{ position.salary }}" disabled />
+                    </view>
+                </view>
+                <view class="weui-cell weui-cell_input">
+                    <view class="weui-cell__hd">
+                        <view class="weui-label">工作地点</view>
+                    </view>
+                    <view class="weui-cell__bd">
+                        <input class="weui-input" placeholder="{{ position.work_address }}" disabled />
+                    </view>
+                </view>
+            </view>
+            <view wx:if="{{ applyRecord }}">
+                <view class="weui-cells__title">我的申请信息</view>
+                <view class="weui-cells weui-cells_after-title">
+                    <view class="weui-cell weui-cell_input">
+                        <view class="weui-cell__hd">
+                            <view class="weui-label">姓名</view>
+                        </view>
+                        <view class="weui-cell__bd">
+                            <input class="weui-input" placeholder="{{ applyRecord.name }}" disabled />
+                        </view>
+                    </view>
+                    <view class="weui-cell weui-cell_input">
+                        <view class="weui-cell__hd">
+                            <view class="weui-label">性别</view>
+                        </view>
+                        <view class="weui-cell__bd">
+                            <input class="weui-input" placeholder="{{ applyRecord.gender }}" disabled />
+                        </view>
+                    </view>
+                    <view class="weui-cell weui-cell_input">
+                        <view class="weui-cell__hd">
+                            <view class="weui-label">联系电话</view>
+                        </view>
+                        <view class="weui-cell__bd">
+                            <input class="weui-input" placeholder="{{ applyRecord.phone }}" disabled />
+                        </view>
+                    </view>
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    import util from '@/utils/util'
+    export default class PositionShow extends wepy.page {
+        config = {
+            navigationBarTitleText: '详情',
+            usingComponents: {
+                'wux-cell-group': '../../wux/cell-group/index',
+                'wux-cell': '../../wux/cell/index',
+                'wux-white-space': '../../wux/white-space/index',
+                'wux-fab-button': '../../wux/fab-button/index'
+            }
+        }
+        data = {
+            position: null,
+            applyRecord: null,
+            buttons: [{
+                    label: '联系电话',
+                    icon: '/images/call.png',
+                },
+                {
+                    label: '在线报名',
+                    icon: '/images/edit.png',
+                },
+            ]
+        }
+        async getPosition(id) {
+            try {
+                let positionResponse = await api.request({
+                    url: 'positions/' + id,
+                    data: {}
+                })
+                if (positionResponse.statusCode === 200) {
+                    let position = positionResponse.data.data
+                    position.created_at_diff = util.diffForHumans(position.created_at)
+                    this.position = position
+                    let applyRecordResponse = await api.authRequest({
+                        url: 'user/positions/' + id + '/apply_record'
+                    })
+                    if (applyRecordResponse.statusCode === 200) {
+                        this.applyRecord = applyRecordResponse.data.data
+                    }
+                    this.$apply()
+                } else if (positionResponse.statusCode === 404) {
+                    wepy.navigateBack()
+                }
+                return positionResponse
+            } catch (err) {
+                console.log(err)
+                wepy.showModal({
+                    title: '提示',
+                    content: '服务器错误，请联系管理员'
+                })
+            }
+        }
+        async onLoad(options) {
+            this.getPosition(options.id)
+            let user = await this.$parent.getCurrentUser()
+            if (!user) {
+                wepy.switchTab({
+                    url: '/pages/users/me',
+                })
+            }
+        }
+        methods = {
+            fabButtonOnClick(e) {
+                console.log('onClick', e.detail)
+                switch (e.detail.index) {
+                    case 0:
+                        wepy.makePhoneCall({
+                            phoneNumber: this.position.contact_phone
+                        })
+                        break;
+                    case 1:
+                        if (this.applyRecord) {
+                            wepy.showModal({
+                                title: '提示',
+                                content: '您已提交申请信息，请勿重复提交。'
+                            })
+                        } else {
+                            wepy.navigateTo({
+                                url: '/pages/apply/create?position_id=' + this.position.id
+                            })
+                        }
+                        break;
+                }
+            },
+        }
+    }
+</script>
+

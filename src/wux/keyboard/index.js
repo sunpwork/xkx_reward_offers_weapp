@@ -2,17 +2,17 @@ import baseComponent from '../helpers/baseComponent'
 import classNames from '../helpers/classNames'
 
 const defaults = {
-  prefixCls: 'wux-keyboard',
-  className: '',
-  titleText: '安全键盘',
-  cancelText: '取消',
-  inputText: '输入数字密码',
-  showCancel: true,
-  disorder: false,
-  password: true,
-  maxlength: 6,
-  onChange(value) {},
-  callback(value) {}
+    prefixCls: 'wux-keyboard',
+    className: '',
+    titleText: '安全键盘',
+    cancelText: '取消',
+    inputText: '输入数字密码',
+    showCancel: true,
+    disorder: false,
+    password: true,
+    maxlength: 6,
+    onChange(value) {},
+    callback(value) {},
     // onClose(value) {},
 }
 
@@ -24,73 +24,73 @@ const defaults = {
  * @returns
  */
 const upsetNums = (isRandom = false, arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]) => {
-  if (isRandom) {
-    const floor = Math.floor
-    const random = Math.random
-    const len = arr.length
-    let i, j, temp, n = floor(len / 2) + 1
-    while (n--) {
-      i = floor(random() * len)
-      j = floor(random() * len)
-      if (i !== j) {
-        temp = arr[i]
-        arr[i] = arr[j]
-        arr[j] = temp
-      }
+    if (isRandom) {
+        const floor = Math.floor
+        const random = Math.random
+        const len = arr.length
+        let i, j, temp, n = floor(len / 2) + 1
+        while (n--) {
+            i = floor(random() * len)
+            j = floor(random() * len)
+            if (i !== j) {
+                temp = arr[i]
+                arr[i] = arr[j]
+                arr[j] = temp
+            }
+        }
     }
-  }
 
-  let nums = []
+    let nums = []
 
-  for (let i = 0; i < 4; i++) {
-    nums.push(arr.slice(i * 3, (i + 1) * 3))
-  }
+    for (let i = 0; i < 4; i++) {
+        nums.push(arr.slice(i * 3, (i + 1) * 3))
+    }
 
-  return nums
+    return nums
 }
 
 baseComponent({
-  useFunc: true,
-  data: defaults,
-  computed: {
-    classes() {
-      const { prefixCls } = this.data
-      const wrap = classNames(prefixCls)
-      const hd = `${prefixCls}__hd`
-      const bd = `${prefixCls}__bd`
-      const label = `${prefixCls}__label`
-      const password = `${prefixCls}__password`
-      const input = `${prefixCls}__input`
-      const ft = `${prefixCls}__ft`
-      const title = `${prefixCls}__title`
-      const numbers = `${prefixCls}__numbers`
-      const number = `${prefixCls}__number`
-      const text = `${prefixCls}__text`
-      const hover = `${prefixCls}__text--hover`
+    useFunc: true,
+    data: defaults,
+    computed: {
+        classes() {
+            const { prefixCls } = this.data
+            const wrap = classNames(prefixCls)
+            const hd = `${prefixCls}__hd`
+            const bd = `${prefixCls}__bd`
+            const label = `${prefixCls}__label`
+            const password = `${prefixCls}__password`
+            const input = `${prefixCls}__input`
+            const ft = `${prefixCls}__ft`
+            const title = `${prefixCls}__title`
+            const numbers = `${prefixCls}__numbers`
+            const number = `${prefixCls}__number`
+            const text = `${prefixCls}__text`
+            const hover = `${prefixCls}__text--hover`
 
-      return {
-        wrap,
-        hd,
-        bd,
-        label,
-        password,
-        input,
-        ft,
-        title,
-        numbers,
-        number,
-        text,
-        hover
-      }
-    }
-  },
-  methods: {
+            return {
+                wrap,
+                hd,
+                bd,
+                label,
+                password,
+                input,
+                ft,
+                title,
+                numbers,
+                number,
+                text,
+                hover,
+            }
+        },
+    },
+    methods: {
         /**
          * 隐藏
          */
-    hide() {
-      this.$$setData({ in: false })
-    },
+        hide() {
+            this.$$setData({ in: false })
+        },
         /**
          * 上拉键盘组件
          * @param {Object} opts 配置项
@@ -106,69 +106,69 @@ baseComponent({
          * @param {Function} opts.callback 输入完成后的回调函数
          * @param {Function} opts.onClose 输入完成后的回调函数，优先级高于 callback
          */
-    show(opts = {}) {
-      const nums = upsetNums(opts.disorder)
-      const maxlength = opts.maxlength <= 0 ? -1 : opts.maxlength
-      const keys = maxlength !== -1 ? [...new Array(maxlength || defaults.maxlength)].map(() => 1) : []
-      const options = this.$$mergeOptionsAndBindMethods(Object.assign({ nums, keys, value: '' }, defaults, opts))
+        show(opts = {}) {
+            const nums = upsetNums(opts.disorder)
+            const maxlength = opts.maxlength <= 0 ? -1 : opts.maxlength
+            const keys = maxlength !== -1 ? [...new Array(maxlength || defaults.maxlength)].map(() => 1) : []
+            const options = this.$$mergeOptionsAndBindMethods(Object.assign({ nums, keys, value: '' }, defaults, opts))
 
-      this.$$setData({ in: true, ...options })
+            this.$$setData({ in: true, ...options })
 
-      return this.hide.bind(this)
-    },
+            return this.hide.bind(this)
+        },
         /**
          * 增加
          */
-    increase(e) {
-      const dataset = e.currentTarget.dataset
-      const nextValue = String(dataset.value)
-      const { value, maxlength } = this.data
+        increase(e) {
+            const dataset = e.currentTarget.dataset
+            const nextValue = String(dataset.value)
+            const { value, maxlength } = this.data
 
-      if (value.length >= maxlength && maxlength !== -1) return
+            if (value.length >= maxlength && maxlength !== -1) return
 
-      this.updateValue(value + nextValue)
-    },
+            this.updateValue(value + nextValue)
+        },
         /**
          * 减少
          */
-    decrease(e) {
-      const { value } = this.data
+        decrease(e) {
+            const { value } = this.data
 
-      if (value.length === 0) return
+            if (value.length === 0) return
 
-      this.updateValue(value.substr(0, value.length - 1))
-    },
+            this.updateValue(value.substr(0, value.length - 1))
+        },
         /**
          * 更新
          */
-    updateValue(value = '') {
-      this.$$setData({ value })
+        updateValue(value = '') {
+            this.$$setData({ value })
 
             // onChange
-      if (typeof this.fns.onChange === 'function') {
-        this.fns.onChange.call(this, value)
-      }
+            if (typeof this.fns.onChange === 'function') {
+                this.fns.onChange.call(this, value)
+            }
 
             // onClose
-      if (value.length === this.data.maxlength) {
-        const preCloseCallback = this.fns.onClose || this.fns.callback
-        const performCloseDialog = () => this.hide()
+            if (value.length === this.data.maxlength) {
+                const preCloseCallback = this.fns.onClose || this.fns.callback
+                const performCloseDialog = () => this.hide()
 
-        if (preCloseCallback && typeof preCloseCallback === 'function') {
-          const preCloseCallbackResult = preCloseCallback.call(this, value)
-          if (typeof preCloseCallbackResult === 'object') {
-            if (preCloseCallbackResult.closePromise) {
-              preCloseCallbackResult.closePromise.then(performCloseDialog, performCloseDialog)
-            } else {
-              preCloseCallbackResult.then(performCloseDialog, performCloseDialog)
+                if (preCloseCallback && typeof preCloseCallback === 'function') {
+                    const preCloseCallbackResult = preCloseCallback.call(this, value)
+                    if (typeof preCloseCallbackResult === 'object') {
+                        if (preCloseCallbackResult.closePromise) {
+                            preCloseCallbackResult.closePromise.then(performCloseDialog, performCloseDialog)
+                        } else {
+                            preCloseCallbackResult.then(performCloseDialog, performCloseDialog)
+                        }
+                    } else if (preCloseCallbackResult !== false) {
+                        performCloseDialog()
+                    }
+                } else {
+                    performCloseDialog()
+                }
             }
-          } else if (preCloseCallbackResult !== false) {
-            performCloseDialog()
-          }
-        } else {
-          performCloseDialog()
-        }
-      }
-    }
-  }
+        },
+    },
 })

@@ -17,9 +17,7 @@
   import wepy from 'wepy'
   import api from '@/utils/api'
   import {
-    $wuxDialog
-  } from '@/wux/index'
-  import {
+    $wuxDialog,
     $wuxSelect
   } from '@/wux/index'
   export default class UserEdit extends wepy.page {
@@ -72,6 +70,7 @@
               this.genderIndex = index
             }
           })
+          wepy.setStorageSync('user', this.user)
           this.$apply()
         }
         return updateResponse
@@ -84,37 +83,6 @@
       }
     }
     methods = {
-      async updateAvatar() {
-        let image = await wepy.chooseImage({
-          count: 1
-        })
-        try {
-          let avatar = image.tempFilePaths[0]
-          // 调用上传接口
-          let imageResponse = await api.updateFile({
-            url: 'images',
-            method: 'POST',
-            name: 'image',
-            formData: {
-              type: 'avatar'
-            },
-            filePath: avatar
-          })
-          // 上传成功
-          if (imageResponse.statusCode === 201) {
-            let responseData = JSON.parse(imageResponse.data)
-            this.user.avatar = responseData.path
-            this.avatarId = responseData.id
-            this.$apply()
-          }
-        } catch (err) {
-          console.log(err)
-          wepy.showModal({
-            title: '提示',
-            content: '服务器错误，请联系管理员'
-          })
-        }
-      },
       async updateNamePrompt() {
         let _this = this
         $wuxDialog().prompt({
@@ -192,7 +160,7 @@
             if (index !== -1) {
               await this.updateUserInfo({
                 gender: value
-              })              
+              })
             }
           },
         })
@@ -211,6 +179,7 @@
             if (bindResponse.statusCode === 200) {
               this.user = bindResponse.data.data
               this.$apply()
+              wepy.setStorageSync('user', this.user)
             }
           } catch (err) {
             console.log(err)

@@ -9,7 +9,7 @@ const request = async (options, showLoading = true) => {
       url: options
     }
   }
-    // 显示加载中
+  // 显示加载中
   if (showLoading) {
     wepy.showLoading({ title: '加载中' })
   }
@@ -21,7 +21,7 @@ const request = async (options, showLoading = true) => {
     wepy.hideLoading()
   }
 
-    // 服务器异常后给与提示
+  // 服务器异常后给与提示
   if (response.statusCode === 500) {
     wepy.showModal({
       title: '提示',
@@ -54,10 +54,10 @@ const getToken = async (options) => {
   let accessToken = wepy.getStorageSync('access_token')
   let expiredAt = wepy.getStorageSync('access_token_expired_at')
 
-    // 如果token过期了，则调用刷新方法
+  // 如果token过期了，则调用刷新方法
   if (accessToken && new Date().getTime() > expiredAt) {
     let refreshResponse = await refreshToken(accessToken)
-        // 刷新成功
+    // 刷新成功
     if (refreshResponse.statusCode === 200) {
       accessToken = refreshResponse.data.access_token
     } else {
@@ -79,9 +79,9 @@ const refreshToken = async (accessToken) => {
       'Authorization': 'Bearer ' + accessToken
     }
   })
-    // 刷新成功
+  // 刷新成功
   if (refreshResponse.statusCode === 200) {
-        // 存储新的token
+    // 存储新的token
     wepy.setStorageSync('access_token', refreshResponse.data.access_token)
     wepy.setStorageSync('access_token_expired_at', new Date().getTime() + refreshResponse.data.expires_in * 1000)
   }
@@ -95,10 +95,10 @@ const authRequest = async (options, showLoading = true) => {
       url: options
     }
   }
-    // 获取Token
+  // 获取Token
   let accessToken = await getToken()
 
-    // 将Token 设置在header中
+  // 将Token 设置在header中
   let header = options.header || {}
   header.Authorization = 'Bearer ' + accessToken
   options.header = header
@@ -106,9 +106,50 @@ const authRequest = async (options, showLoading = true) => {
   return request(options, showLoading)
 }
 
+const uploadFile = async (options = {}) => {
+  wepy.showLoading({ title: '上传中' })
+  let accessToken = await getToken()
+  options.url = host + '/' + options.url
+  let header = options.header || {}
+  header.Authorization = 'Bearer ' + accessToken
+  options.header = header
+
+  let response = await wepy.uploadFile(options)
+
+  wepy.hideLoading()
+  return response
+}
+
+const uploadImage = async (imagePath, type) => {
+  try {
+    // 调用上传接口
+    let imageResponse = await uploadFile({
+      url: 'images',
+      method: 'POST',
+      name: 'image',
+      formData: {
+        type: type
+      },
+      filePath: imagePath
+    })
+    // 上传成功
+    if (imageResponse.statusCode === 201) {
+      return imageResponse
+    }
+  } catch (err) {
+    console.log(err)
+    wepy.showModal({
+      title: '提示',
+      content: '服务器错误，请联系管理员'
+    })
+  }
+}
+
 export default {
   request,
   login,
   authRequest,
-  refreshToken
+  refreshToken,
+  uploadFile,
+  uploadImage
 }

@@ -1,0 +1,124 @@
+<style lang="less">
+    .weui-media-box__info__meta {
+        margin: 0;
+        font-size: 12px;
+    }
+    .position-info {
+        margin-top: 5px;
+    }
+    .position-title {
+        white-space: normal;
+        font-size: 14px;
+    }
+    .covers {
+        padding: 4px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 50px;
+        height: 50px;
+    }
+    .apply-count {
+        background-color: #d8d8d8;
+        float: right;
+    }
+</style>
+<template>
+    <view class="weui-panel weui-panel_access">
+        <view class="weui-panel__bd">
+            <repeat for="{{ positions }}" wx:key="id" index="index" item="position">
+                <navigator url="/pages/position/show?id={{ position.id }}" class="weui-media-box weui-media-box_appmsg" hover-class="weui-cell_active">
+                    <view class="weui-media-box__hd weui-media-box__hd_in-appmsg">
+                        <image class="weui-media-box__thumb covers" src="{{ position.covers }}" />
+                    </view>
+                    <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+                        <view class="weui-media-box__title position-title">{{ position.title }}</view>
+                        <view class="weui-media-box__desc">{{ position.detail_info }}</view>
+                        <view class="weui-media-box__info position-info">
+                            <view class="weui-media-box__info__meta">{{ position.category.data.name }}</view>
+                            <view class="weui-media-box__info__meta">{{ position.created_at_diff }}</view>
+                            <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">薪资：{{ position.salary }}</view>
+                        </view>
+                    </view>
+                    <view class="weui-badge apply-count">{{ position.apply_quantity }}</view>
+                </navigator>
+            </repeat>
+            <view class="weui-loadmore weui-loadmore_line" wx:if="{{ noMoreData }}">
+                <view class="weui-loadmore__tips weui-loadmore__tips_in-line">没有更多数据</view>
+            </view>
+        </view>
+    </view>
+</template>
+<script>
+    import wepy from 'wepy'
+    import util from '@/utils/util'
+    import api from '@/utils/api'
+    export default class PositionList extends wepy.component {
+        data = {
+            // 兼职数据
+            positions: [],
+            noMoreData: false,
+            isLoading: false
+        }
+        props = {
+            // 父页面传入，请求参数data
+            syncData: {
+                type: Object,
+                default: {}
+            },
+            // 父页面传入，请求url
+            syncUrl: {
+                type: String,
+                default: 'positions'
+            }
+        }
+        async getPositions(reset = false) {
+            if (!this.syncData.page) {
+                this.syncData.page = 1
+            }
+            this.syncData.include = 'category'
+            try {
+                let positionsResponse = await api.request({
+                    url: this.syncUrl,
+                    data: this.syncData
+                })
+                if (positionsResponse.statusCode === 200) {
+                    let positions = positionsResponse.data.data
+                    // 格式化时间
+                    positions.forEach(position => {
+                        position.created_at_diff = util.diffForHumans(position.created_at)
+                    });
+                    this.positions = reset ? positions : this.positions.concat(positions)
+                    let pagination = positionsResponse.data.meta.pagination
+                    if (pagination.current_page === pagination.total_pages) {
+                        this.noMoreData = true
+                    }
+                    this.$apply()
+                }
+                return positionsResponse
+            } catch (err) {
+                console.log(err)
+                wepy.showModal({
+                    title: '提示',
+                    content: '服务器错误，请联系管理员'
+                })
+            }
+        }
+        async loadMore() {
+            // 如果没有更过数据，或者正在加载，直接返回
+            if (this.noMoreData || this.isLoading) {
+                return
+            }
+            // 标记正在加载
+            this.isLoading = true
+            this.syncData.page = this.syncData.page + 1
+            await this.getPositions()
+            this.isLoading = false
+            this.$apply()
+        }
+        async reload() {
+            this.noMoreData = false
+            this.syncData.page = 1
+            return await this.getPositions(true)
+        }
+    }
+</script>

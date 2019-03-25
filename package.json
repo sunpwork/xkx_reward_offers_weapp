@@ -8,7 +8,7 @@
     "build": "cross-env NODE_ENV=production wepy build --no-cache",
     "dev:web": "wepy build --output web",
     "clean": "find ./dist -maxdepth 1 -not -name 'project.config.json' -not -name 'dist' | xargs rm -rf",
-    "test": "echo \"Error: no test specified\" && exit 1"    
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "wepy": {
     "module-a": false,
@@ -17,6 +17,7 @@
   "author": "sunpwork@qq.com",
   "license": "MIT",
   "dependencies": {
+    "moment": "^2.24.0",
     "promise-polyfill": "^8.1.0",
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",

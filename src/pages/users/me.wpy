@@ -16,12 +16,13 @@
   <view class="page">
     <view class="page__bd">
       <view class="avatar">
-        <image src="{{ user.avatar }}" />
+        <image @tap="updateAvatar" src="{{ user.avatar }}" />
         <view class="avatar__text">{{ user.name }}</view>
       </view>
       <wux-cell-group title="" label="">
-        <wux-cell title="个人信息" is-link url="/pages/users/edit"></wux-cell>
-        <wux-cell title="我发布的" is-link></wux-cell>
+        <wux-cell wx:if="{{ user }}" title="个人信息" is-link url="/pages/users/edit"></wux-cell>
+        <wux-cell wx:else title="个人信息" is-link open-type="getUserInfo" bind:getuserinfo="bindGetUserInfo" extra="未绑定"></wux-cell>
+        <wux-cell title="我的申请" is-link></wux-cell>
       </wux-cell-group>
     </view>
   </view>
@@ -43,43 +44,80 @@
       // 用户信息
       user: null
     }
-    async onLoad() {
+    async onLoad() {}
+    async onShow() {
       this.user = await this.$parent.getCurrentUser()
       this.$apply()
+      if (!this.user) {
+        wepy.showToast({
+          icon: 'none',
+          title: '请绑定微信用户'
+        })
+      }
     }
-    async onShow() {}
     methods = {
-      // 获取用户信息
-      // async bindGetUserInfo(e) {
-      //   if (e.detail.userInfo) {
-      //     let userInfo = e.detail.userInfo
-      //     let param = {
-      //       'name': userInfo.nickName,
-      //       'avatar': userInfo.avatarUrl
-      //     }
-      //     switch (userInfo.gender) {
-      //       case 0:
-      //         param['gender'] = 'secret'
-      //         break
-      //       case 1:
-      //         param['gender'] = 'male'
-      //         break
-      //       case 2:
-      //         param['gender'] = 'female'
-      //         break
-      //     }
-      //     try {
-      //       await api.login(param)
-      //       this.onLoad()
-      //     } catch (err) {
-      //       console.log(err)
-      //       wepy.showModel({
-      //         title: '提示',
-      //         content: '服务器错误，请联系管理员'
-      //       })
-      //     }
-      //   }
-      // }
+      //获取用户信息
+      async bindGetUserInfo(e) {
+        if (e.detail.userInfo) {
+          let userInfo = e.detail.userInfo
+          let param = {
+            'name': userInfo.nickName,
+            'avatar': userInfo.avatarUrl
+          }
+          switch (userInfo.gender) {
+            case 0:
+              param['gender'] = 'secret'
+              break
+            case 1:
+              param['gender'] = 'male'
+              break
+            case 2:
+              param['gender'] = 'female'
+              break
+          }
+          try {
+            await api.login(param)
+            this.onShow()
+          } catch (err) {
+            console.log(err)
+            wepy.showModel({
+              title: '提示',
+              content: '服务器错误，请联系管理员'
+            })
+          }
+        }
+      },
+      async updateAvatar() {
+        let image = await wepy.chooseImage({
+          count: 1
+        })
+        let avatar = image.tempFilePaths[0]
+        let uploadResponse = await api.uploadImage(avatar, 'avatar')
+        if (uploadResponse.statusCode === 201) {
+          let imageData = JSON.parse(uploadResponse.data).data
+          try {
+            let updateResponse = await api.authRequest({
+              url: 'user',
+              method: 'PUT',
+              data: {
+                avatar_image_id: imageData.id
+              }
+            })
+            if (updateResponse.statusCode === 200) {
+              this.user = updateResponse.data.data
+              wepy.setStorageSync('user', this.user)
+              this.$apply()
+            }
+            return updateResponse
+          } catch (err) {
+            console.log(err)
+            wepy.showModel({
+              title: '提示',
+              content: '服务器错误，请联系管理员'
+            })
+          }
+        }
+      }
     }
   }
 </script>

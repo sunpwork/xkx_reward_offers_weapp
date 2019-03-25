@@ -7,13 +7,13 @@ import $wuxCountUp from './countup/index'
  * @param {Object} ctx 页面栈或组件的实例，默认为当前页面栈实例
  */
 const getCtx = (selector, ctx = getCurrentPages()[getCurrentPages().length - 1]) => {
-  const componentCtx = ctx.selectComponent(selector)
+    const componentCtx = ctx.selectComponent(selector)
 
-  if (!componentCtx) {
-    throw new Error('无法找到对应的组件，请按文档说明使用组件')
-  }
+    if (!componentCtx) {
+        throw new Error('无法找到对应的组件，请按文档说明使用组件')
+    }
 
-  return componentCtx
+    return componentCtx
 }
 
 const $wuxActionSheet = (selector = '#wux-actionsheet', ctx) => getCtx(selector, ctx)
@@ -45,5 +45,5 @@ export {
     $stopWuxRefresher,
     $stopWuxLoader,
     $wuxCountDown,
-    $wuxCountUp
+    $wuxCountUp,
 }

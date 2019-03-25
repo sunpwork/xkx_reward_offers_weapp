@@ -3,38 +3,38 @@ import classNames from '../helpers/classNames'
 import styleToCssString from '../helpers/styleToCssString'
 
 baseComponent({
-  properties: {
-    prefixCls: {
-      type: String,
-      value: 'wux-wingblank'
+    properties: {
+        prefixCls: {
+            type: String,
+            value: 'wux-wingblank',
+        },
+        size: {
+            type: String,
+            value: 'default',
+        },
+        bodyStyle: {
+            type: [String, Object],
+            value: '',
+            observer(newVal) {
+                this.setData({
+                    extStyle: styleToCssString(newVal),
+                })
+            },
+        },
     },
-    size: {
-      type: String,
-      value: 'default'
+    data: {
+        extStyle: '',
     },
-    bodyStyle: {
-      type: [String, Object],
-      value: '',
-      observer(newVal) {
-        this.setData({
-          extStyle: styleToCssString(newVal)
-        })
-      }
-    }
-  },
-  data: {
-    extStyle: ''
-  },
-  computed: {
-    classes() {
-      const { prefixCls, size } = this.data
-      const wrap = classNames(prefixCls, {
-        [`${prefixCls}--${size}`]: size
-      })
+    computed: {
+        classes() {
+            const { prefixCls, size } = this.data
+            const wrap = classNames(prefixCls, {
+                [`${prefixCls}--${size}`]: size,
+            })
 
-      return {
-        wrap
-      }
-    }
-  }
+            return {
+                wrap,
+            }
+        },
+    },
 })
