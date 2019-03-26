@@ -68,15 +68,18 @@
       }
     }
     globalData = {
-      userInfo: null
+      userInfo: null,
+      genderMap: {
+        male: '男',
+        female: '女'
+      }
     }
     constructor() {
       super()
       this.use('requestfix')
       this.use('promisify')
     }
-    async onLaunch() {
-    }
+    async onLaunch() {}
     async getCurrentUser() {
       if (!this.checkLogin()) {
         await api.login()

@@ -178,6 +178,12 @@
             })
             if (bindResponse.statusCode === 200) {
               this.user = bindResponse.data.data
+              this.genderItems.forEach((item, index) => {
+                if (item.value === this.user.gender) {
+                  this.user.gender_diff = item.title
+                  this.genderIndex = index
+                }
+              })
               this.$apply()
               wepy.setStorageSync('user', this.user)
             }

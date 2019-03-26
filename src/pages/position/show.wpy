@@ -16,68 +16,32 @@
                 </view>
             </view>
             <wux-white-space size="default" />
-            <view class="weui-cells weui-cells_after-title">
-                <view class="weui-cell weui-cell_input">
-                    <view class="weui-cell__hd">
-                        <view class="weui-label">联系人</view>
-                    </view>
-                    <view class="weui-cell__bd">
-                        <input class="weui-input" placeholder="{{ position.contact_man }}" disabled />
-                    </view>
-                </view>
-                <view class="weui-cell weui-cell_input">
-                    <view class="weui-cell__hd">
-                        <view class="weui-label">招聘人数</view>
-                    </view>
-                    <view class="weui-cell__bd">
-                        <input class="weui-input" placeholder="{{ position.quantity }}" disabled />
-                    </view>
-                </view>
-                <view class="weui-cell weui-cell_input">
-                    <view class="weui-cell__hd">
-                        <view class="weui-label">薪资</view>
-                    </view>
-                    <view class="weui-cell__bd">
-                        <input class="weui-input" placeholder="{{ position.salary }}" disabled />
-                    </view>
-                </view>
-                <view class="weui-cell weui-cell_input">
-                    <view class="weui-cell__hd">
-                        <view class="weui-label">工作地点</view>
-                    </view>
-                    <view class="weui-cell__bd">
-                        <textarea class="weui-input" placeholder="{{ position.work_address }}" disabled />
-                    </view>
-                </view>
-            </view>
+            <wux-cell-group title="">
+                <wux-cell hover-class="none">
+                    <wux-input label="联系人" placeholder="{{ position.contact_man }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="招聘人数" placeholder="{{ position.quantity }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="薪资" placeholder="{{ position.salary }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-textarea rows="3" label="工作地点" placeholder="{{position.work_address}}" />
+                </wux-cell>
+            </wux-cell-group>
             <view wx:if="{{ applyRecord }}">
-                <view class="weui-cells__title">我的申请信息</view>
-                <view class="weui-cells weui-cells_after-title">
-                    <view class="weui-cell weui-cell_input">
-                        <view class="weui-cell__hd">
-                            <view class="weui-label">姓名</view>
-                        </view>
-                        <view class="weui-cell__bd">
-                            <input class="weui-input" placeholder="{{ applyRecord.name }}" disabled />
-                        </view>
-                    </view>
-                    <view class="weui-cell weui-cell_input">
-                        <view class="weui-cell__hd">
-                            <view class="weui-label">性别</view>
-                        </view>
-                        <view class="weui-cell__bd">
-                            <input class="weui-input" placeholder="{{ applyRecord.gender }}" disabled />
-                        </view>
-                    </view>
-                    <view class="weui-cell weui-cell_input">
-                        <view class="weui-cell__hd">
-                            <view class="weui-label">联系电话</view>
-                        </view>
-                        <view class="weui-cell__bd">
-                            <input class="weui-input" placeholder="{{ applyRecord.phone }}" disabled />
-                        </view>
-                    </view>
-                </view>
+                <wux-cell-group title="我的申请信息">
+                    <wux-cell hover-class="none">
+                        <wux-input label="姓名" placeholder="{{ applyRecord.name }}" />
+                    </wux-cell>
+                    <wux-cell hover-class="none">
+                        <wux-input label="性别" placeholder="{{ applyRecord.gender_diff }}" />
+                    </wux-cell>
+                    <wux-cell hover-class="none">
+                        <wux-input label="联系电话" placeholder="{{ applyRecord.phone }}" />
+                    </wux-cell>
+                </wux-cell-group>
             </view>
         </view>
     </view>
@@ -93,6 +57,8 @@
             usingComponents: {
                 'wux-cell-group': '../../wux/cell-group/index',
                 'wux-cell': '../../wux/cell/index',
+                'wux-input': '../../wux/input/index',
+                'wux-textarea': '../../wux/textarea/index',
                 'wux-white-space': '../../wux/white-space/index',
                 'wux-fab-button': '../../wux/fab-button/index'
             }
@@ -101,12 +67,17 @@
             position: null,
             applyRecord: null,
             buttons: [{
+                    label: '在线报名',
+                    icon: '/images/edit.png',
+                },
+                {
                     label: '联系电话',
                     icon: '/images/call.png',
                 },
                 {
-                    label: '在线报名',
-                    icon: '/images/edit.png',
+                    label: '分享',
+                    icon: '/images/share.png',
+                    openType: 'share',
                 },
             ]
         }
@@ -120,12 +91,17 @@
                     let position = positionResponse.data.data
                     position.created_at_diff = util.diffForHumans(position.created_at)
                     this.position = position
+                    if (!position.display) {
+                        this.buttons[0].disabled = true
+                    }
                     let applyRecordResponse = await api.authRequest({
                         url: 'user/positions/' + id + '/apply_record'
                     })
                     if (applyRecordResponse.statusCode === 200) {
-                        this.applyRecord = applyRecordResponse.data.data
-                        this.buttons[1].disabled = true
+                        let applyRecord = applyRecordResponse.data.data
+                        applyRecord.gender_diff = this.$parent.globalData.genderMap[applyRecord.gender]
+                        this.applyRecord = applyRecord
+                        this.buttons[0].disabled = true
                     }
                     this.$apply()
                 } else if (positionResponse.statusCode === 404) {
@@ -149,18 +125,24 @@
                 })
             }
         }
+        async onShow() {
+            if (this.position) {
+                this.getPosition(this.position.id)
+            }
+        }
+        onShareAppMessage() {}
         methods = {
             fabButtonOnClick(e) {
                 console.log('onClick', e.detail)
                 switch (e.detail.index) {
                     case 0:
-                        wepy.makePhoneCall({
-                            phoneNumber: this.position.contact_phone
+                        wepy.navigateTo({
+                            url: '/pages/apply/create?position_id=' + this.position.id
                         })
                         break;
                     case 1:
-                        wepy.navigateTo({
-                            url: '/pages/apply/create?position_id=' + this.position.id
+                        wepy.makePhoneCall({
+                            phoneNumber: this.position.contact_phone
                         })
                         break;
                 }

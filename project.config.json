@@ -1,7 +1,7 @@
 {
 	"description": "xkx reward offers weapp project",
 	"setting": {
-		"urlCheck": false,
+		"urlCheck": true,
 		"es6": false,
 		"postcss": false,
 		"minified": false,
@@ -9,7 +9,7 @@
 		"autoAudits": false
 	},
 	"compileType": "miniprogram",
-	"appid": "wx56b3efb602e3839d",
+	"appid": "wx859eaa3cc35f6106",
 	"projectname": "xkx_reward_offers_weapp",
 	"miniprogramRoot": "dist/",
 	"condition": {}

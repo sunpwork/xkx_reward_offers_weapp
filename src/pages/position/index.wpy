@@ -131,6 +131,9 @@
             // 加载更多内容
             this.$invoke('positionlist', 'loadMore')
         }
+        onShareAppMessage(){
+            
+        }
         methods = {
             toggle() {
                 this.categoryOpen = !this.categoryOpen
