@@ -46,7 +46,7 @@
                         <view class="weui-label">工作地点</view>
                     </view>
                     <view class="weui-cell__bd">
-                        <input class="weui-input" placeholder="{{ position.work_address }}" disabled />
+                        <textarea class="weui-input" placeholder="{{ position.work_address }}" disabled />
                     </view>
                 </view>
             </view>
@@ -125,6 +125,7 @@
                     })
                     if (applyRecordResponse.statusCode === 200) {
                         this.applyRecord = applyRecordResponse.data.data
+                        this.buttons[1].disabled = true
                     }
                     this.$apply()
                 } else if (positionResponse.statusCode === 404) {
@@ -158,16 +159,9 @@
                         })
                         break;
                     case 1:
-                        if (this.applyRecord) {
-                            wepy.showModal({
-                                title: '提示',
-                                content: '您已提交申请信息，请勿重复提交。'
-                            })
-                        } else {
-                            wepy.navigateTo({
-                                url: '/pages/apply/create?position_id=' + this.position.id
-                            })
-                        }
+                        wepy.navigateTo({
+                            url: '/pages/apply/create?position_id=' + this.position.id
+                        })
                         break;
                 }
             },

@@ -69,6 +69,10 @@
             syncUrl: {
                 type: String,
                 default: 'positions'
+            },
+            auth: {
+                type: Boolean,
+                default: false
             }
         }
         async getPositions(reset = false) {
@@ -77,7 +81,11 @@
             }
             this.syncData.include = 'category'
             try {
-                let positionsResponse = await api.request({
+                let requestFun = api.request
+                if (this.auth) {
+                    requestFun = api.authRequest
+                }
+                let positionsResponse = await requestFun({
                     url: this.syncUrl,
                     data: this.syncData
                 })
