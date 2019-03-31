@@ -72,6 +72,15 @@
           })
           wepy.setStorageSync('user', this.user)
           this.$apply()
+          wepy.showToast({
+            icon: 'success',
+            title: '修改成功'
+          })
+        } else {
+          wepy.showToast({
+            icon: 'none',
+            title: updateResponse.data.message
+          })
         }
         return updateResponse
       } catch (err) {
@@ -95,7 +104,7 @@
           placeholder: '请输入姓名',
           maxlength: 8,
           async onConfirm(e, response) {
-            let updateResponse = await _this.updateUserInfo({
+            await _this.updateUserInfo({
               name: response
             })
           }
@@ -140,6 +149,11 @@
               })
               if (verificationCodeResponse.statusCode === 201) {
                 await verificationCodePrompt(verificationCodeResponse.data.key)
+              } else {
+                wepy.showToast({
+                  icon: 'none',
+                  title: verificationCodeResponse.data.message
+                })
               }
             } catch (err) {
               console.log(err)

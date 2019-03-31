@@ -21,13 +21,13 @@
                     <wux-input label="联系人" placeholder="{{ position.contact_man }}" />
                 </wux-cell>
                 <wux-cell hover-class="none">
-                    <wux-input label="招聘人数" placeholder="{{ position.quantity }}" />
+                    <wux-input label="人数" placeholder="{{ position.quantity }}" />
                 </wux-cell>
                 <wux-cell hover-class="none">
-                    <wux-input label="薪资" placeholder="{{ position.salary }}" />
+                    <wux-input label="待遇" placeholder="{{ position.salary }}" />
                 </wux-cell>
                 <wux-cell hover-class="none">
-                    <wux-textarea rows="3" label="工作地点" placeholder="{{position.work_address}}" />
+                    <wux-textarea rows="3" label="地点" placeholder="{{position.work_address}}" />
                 </wux-cell>
             </wux-cell-group>
             <view wx:if="{{ applyRecord }}">

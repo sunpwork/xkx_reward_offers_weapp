@@ -2,6 +2,7 @@ import wepy from 'wepy'
 import 'wepy-async-function'
 
 const host = 'https://xkx-positions.xinsulv.net/api'
+// const host = 'http://xkx-reward-offers.test/api'
 
 const request = async (options, showLoading = true) => {
   if (typeof options === 'string') {

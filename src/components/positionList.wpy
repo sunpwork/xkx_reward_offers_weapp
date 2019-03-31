@@ -36,7 +36,7 @@
                         <view class="weui-media-box__info position-info">
                             <view class="weui-media-box__info__meta">{{ position.category.data.name }}</view>
                             <view class="weui-media-box__info__meta">{{ position.created_at_diff }}</view>
-                            <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">薪资：{{ position.salary }}</view>
+                            <view class="weui-media-box__info__meta weui-media-box__info__meta_extra">待遇：{{ position.salary }}</view>
                         </view>
                     </view>
                     <view class="weui-badge apply-count">{{ position.apply_quantity }}</view>
