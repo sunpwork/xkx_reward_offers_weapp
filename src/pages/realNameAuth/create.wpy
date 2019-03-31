@@ -1,0 +1,99 @@
+<template>
+    <wux-dialog id="wux-dialog" />
+    <wux-dialog id="wux-dialog--alert" />
+    <wux-select id="wux-select--userGender" />
+    <view class="page">
+        <view class="page__bd">
+            <wux-wing-blank size="default">
+                <wux-cell-group title="认证信息" label="">
+                    <wux-cell bind:click="updateNamePrompt" title="真实姓名" is-link extra="{{ applyInfo.name }}"></wux-cell>
+                    <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ applyInfo.gender_diff }}"></wux-cell>
+                    <wux-cell bind:click="" title="手机号" is-link extra="{{ applyInfo.phone ? applyInfo.phone : '绑定手机号' }}" open-type="{{ applyInfo.phone ? '' : 'getPhoneNumber' }}" bindgetphonenumber="{{ applyInfo.phone ? '' : 'bindGetPhoneNumber'}}" bind:click="{{ applyInfo.phone ? 'updatePhonePrompt' : ''}}">
+                    </wux-cell>
+                </wux-cell-group>
+                <wux-cell-group title="认证照片" label="">
+                    <wux-upload controlled listType="picture-card" max="2" url="{{ uploadUrl }}" name="image" header="{{ uploadHeader }}" fileList="{{ imageList }}" formData="{{ uploadFormData }}" bind:change="onChange" bind:success="onSuccess" bind:fail="onFail" bind:complete="onComplete"
+                        bind:remove="onRemove">
+                        <text>+</text>
+                    </wux-upload>
+                </wux-cell-group>
+                <wux-button bind:click="submit" block type="balanced">提交</wux-button>
+            </wux-wing-blank>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    export default class RealNameAuthCreate extends wepy.page {
+        config = {
+            navigationBarTitleText: '实名认证',
+            usingComponents: {
+                'wux-cell-group': '../../wux/cell-group/index',
+                'wux-cell': '../../wux/cell/index',
+                'wux-dialog': '../../wux/dialog/index',
+                'wux-select': '../../wux/select/index',
+                'wux-button': '../../wux/button/index',
+                'wux-wing-blank': '../../wux/wing-blank/index',
+                'wux-upload': '../../wux/upload/index'
+            }
+        };
+        data = {
+            uploadUrl: null,
+            uploadHeader: {},
+            uploadFormData: {
+                type: 'realNameAuth'
+            },
+            imageList: []
+        }
+        async onLoad() {
+            let accessToken = await api.getToken()
+            this.uploadUrl = api.host + '/images'
+            this.uploadHeader.Authorization = 'Bearer ' + accessToken
+            this.$apply()
+        }
+        methods = {
+            onChange(e) {
+                console.log(e.detail)
+                if (e.detail.file.status === 'uploading') {
+                    wepy.showLoading()
+                }
+            },
+            onComplete(e) {
+                wepy.hideLoading()
+                let uploadResponse = e.detail
+                if (uploadResponse.statusCode === 201) {
+                    let imageInfo = JSON.parse(uploadResponse.data).data
+                    this.imageList.push({
+                        uid: imageInfo.id,
+                        status: 'done',
+                        url: imageInfo.path
+                    })
+                } else {
+                    let message = JSON.parse(uploadResponse.data).message
+                    wepy.showToast({
+                        title: message,
+                        icon: 'none'
+                    })
+                }
+            },
+            onRemove(e) {
+                const {
+                    file,
+                    fileList
+                } = e.detail
+                wx.showModal({
+                    content: '确定删除？',
+                    success: (res) => {
+                        if (res.confirm) {
+                            this.imageList = this.imageList.filter((n) => n.uid !== file.uid)
+                            this.$apply()
+                        }
+                    },
+                })
+            },
+        }
+    }
+</script>
+

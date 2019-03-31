@@ -44,6 +44,7 @@
         'pages/users/me',
         'pages/users/edit',
         'pages/apply/create',
+        'pages/realNameAuth/create'
       ],
       window: {
         backgroundTextStyle: 'light',
