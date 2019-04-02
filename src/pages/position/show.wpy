@@ -7,7 +7,7 @@
                     <view class="weui-media-box weui-media-box_text">
                         <view class="weui-media-box__title weui-media-box__title_in-text">{{ position.title }}</view>
                         <view class="weui-media-box__desc">{{ position.detail_info }}</view>
-                        <image src="{{ position.covers }}" />
+                        <image src="{{ position.covers }}" mode="widthFix" />
                         <view class="weui-media-box__info">
                             <view class="weui-media-box__info__meta">{{ position.created_at_diff }} • </view>
                             <view class="weui-media-box__info__meta">{{ position.apply_quantity }}人已报名</view>
