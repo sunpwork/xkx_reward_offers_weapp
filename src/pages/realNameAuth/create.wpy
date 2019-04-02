@@ -40,7 +40,7 @@
                 'wux-select': '../../wux/select/index',
                 'wux-button': '../../wux/button/index',
                 'wux-wing-blank': '../../wux/wing-blank/index',
-                'wux-upload': '../../wux/upload/index'
+                'wux-upload': '../../wux/upload/index',
             }
         };
         data = {
@@ -252,9 +252,9 @@
                         method: 'POST',
                         data: this.realNameAuth
                     })
-                    if(response.statusCode === 201){
+                    if (response.statusCode === 201) {
                         wepy.redirectTo({
-                            url:'/pages/realNameAuth/show'
+                            url: '/pages/realNameAuth/show'
                         })
                     }
                     console.log(response)
