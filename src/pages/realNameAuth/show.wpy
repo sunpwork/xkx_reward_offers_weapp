@@ -1,0 +1,59 @@
+<template>
+    <view class="page">
+        <view class="page__bd">
+            <wux-cell-group title="我的实名信息">
+                <wux-cell hover-class="none">
+                    <wux-input label="姓名" placeholder="{{ realNameAuth.name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="性别" placeholder="{{ realNameAuth.gender_diff }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="联系电话" placeholder="{{ realNameAuth.phone }}" />
+                </wux-cell>                
+            </wux-cell-group>
+            <wux-cell-group title="实名照片">
+                <repeat for="{{ realNameAuth.realNameAuthImages.data }}" wx:key="id" index="index" item="realNameAuthImage">
+                    <image src="{{ realNameAuthImage.url }}" mode = "widthFix" />
+                </repeat>
+            </wux-cell-group>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    import util from '@/utils/util'
+    export default class RealNameAuthShow extends wepy.page {
+        config = {
+            navigationBarTitleText: '实名认证',
+            usingComponents: {
+                'wux-cell-group': '../../wux/cell-group/index',
+                'wux-cell': '../../wux/cell/index',
+                'wux-input': '../../wux/input/index',
+                'wux-textarea': '../../wux/textarea/index',
+                'wux-white-space': '../../wux/white-space/index',
+                'wux-fab-button': '../../wux/fab-button/index'
+            }
+        }
+        data = {
+            realNameAuth: null
+        }
+        async onLoad() {
+            let response = await api.authRequest({
+                url: 'user/realNameAuth',
+                method: 'GET',
+                data: {
+                    include: 'realNameAuthImages'
+                }
+            })
+            if (response.statusCode === 200) {
+                this.realNameAuth = response.data.data
+                this.realNameAuth.gender_diff = this.$parent.globalData.genderMap[this.realNameAuth.gender]
+                this.$apply()
+            }
+        }
+    }
+</script>
+

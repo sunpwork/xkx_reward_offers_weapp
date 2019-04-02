@@ -6,9 +6,9 @@
         <view class="page__bd">
             <wux-wing-blank size="default">
                 <wux-cell-group title="认证信息" label="">
-                    <wux-cell bind:click="updateNamePrompt" title="真实姓名" is-link extra="{{ applyInfo.name }}"></wux-cell>
-                    <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ applyInfo.gender_diff }}"></wux-cell>
-                    <wux-cell bind:click="" title="手机号" is-link extra="{{ applyInfo.phone ? applyInfo.phone : '绑定手机号' }}" open-type="{{ applyInfo.phone ? '' : 'getPhoneNumber' }}" bindgetphonenumber="{{ applyInfo.phone ? '' : 'bindGetPhoneNumber'}}" bind:click="{{ applyInfo.phone ? 'updatePhonePrompt' : ''}}">
+                    <wux-cell bind:click="updateNamePrompt" title="真实姓名" is-link extra="{{ realNameAuth.name }}"></wux-cell>
+                    <wux-cell bind:click="updateGenderSelect" title="性别" is-link extra="{{ realNameAuth.gender_diff }}"></wux-cell>
+                    <wux-cell bind:click="" title="手机号" is-link extra="{{ realNameAuth.phone ? realNameAuth.phone : '绑定手机号' }}" open-type="{{ realNameAuth.phone ? '' : 'getPhoneNumber' }}" bindgetphonenumber="{{ realNameAuth.phone ? '' : 'bindGetPhoneNumber'}}" bind:click="{{ realNameAuth.phone ? 'updatePhonePrompt' : ''}}">
                     </wux-cell>
                 </wux-cell-group>
                 <wux-cell-group title="认证照片" label="">
@@ -26,6 +26,10 @@
 <script>
     import wepy from 'wepy'
     import api from '@/utils/api'
+    import {
+        $wuxDialog,
+        $wuxSelect
+    } from '@/wux/index'
     export default class RealNameAuthCreate extends wepy.page {
         config = {
             navigationBarTitleText: '实名认证',
@@ -40,18 +44,45 @@
             }
         };
         data = {
+            genderItems: [{
+                    'value': 'male',
+                    'title': '男'
+                },
+                {
+                    'value': 'female',
+                    'title': '女'
+                }
+            ],
             uploadUrl: null,
             uploadHeader: {},
             uploadFormData: {
                 type: 'realNameAuth'
             },
-            imageList: []
+            imageList: [],
+            realNameAuth: null,
+            realNameAuth: {}
         }
         async onLoad() {
             let accessToken = await api.getToken()
             this.uploadUrl = api.host + '/images'
             this.uploadHeader.Authorization = 'Bearer ' + accessToken
+            let user = await this.$parent.getCurrentUser()
+            this.realNameAuth = this.initRealNameAuth(user)
             this.$apply()
+        }
+        initRealNameAuth(user) {
+            let realNameAuth = {
+                name: user.name,
+                gender: user.gender,
+                phone: user.phone
+            }
+            this.genderItems.forEach((item, index) => {
+                if (item.value === realNameAuth.gender) {
+                    realNameAuth.gender_diff = item.title
+                    this.genderIndex = index
+                }
+            })
+            return realNameAuth
         }
         methods = {
             onChange(e) {
@@ -93,6 +124,147 @@
                     },
                 })
             },
+            async updateNamePrompt() {
+                let _this = this
+                $wuxDialog().prompt({
+                    resetOnClose: true,
+                    title: '修改昵称',
+                    content: '',
+                    fieldtype: 'text',
+                    password: false,
+                    defaultText: this.realNameAuth.name,
+                    placeholder: '请输入姓名',
+                    maxlength: 8,
+                    onConfirm(e, response) {
+                        _this.realNameAuth.name = response
+                        _this.$apply()
+                    }
+                })
+            },
+            async updatePhonePrompt() {
+                let _this = this
+                const verificationCodePrompt = async(verificationKey) => {
+                    $wuxDialog('#wux-dialog--alert').prompt({
+                        resetOnClose: true,
+                        title: '输入验证码',
+                        content: '',
+                        fieldtype: 'text',
+                        password: false,
+                        placeholder: '请输入收到的验证码',
+                        maxlength: 6,
+                        async onConfirm(e, response) {
+                            let checkResponse = await api.authRequest({
+                                url: 'verificationCodes/check',
+                                method: 'PUT',
+                                data: {
+                                    'verification_key': verificationKey,
+                                    'verification_code': response
+                                }
+                            })
+                            if (checkResponse.statusCode === 200) {
+                                _this.realNameAuth.phone = checkResponse.data.phone
+                                _this.$apply()
+                            }
+                        }
+                    })
+                }
+                $wuxDialog().prompt({
+                    resetOnClose: true,
+                    title: '修改手机号',
+                    content: '',
+                    fieldtype: 'text',
+                    password: false,
+                    defaultText: this.realNameAuth.phone,
+                    placeholder: '请输入手机号',
+                    maxlength: 11,
+                    async onConfirm(e, response) {
+                        try {
+                            let verificationCodeResponse = await api.authRequest({
+                                url: 'verificationCodes',
+                                method: 'POST',
+                                data: {
+                                    'phone': response
+                                }
+                            })
+                            if (verificationCodeResponse.statusCode === 201) {
+                                await verificationCodePrompt(verificationCodeResponse.data.key)
+                            }
+                        } catch (err) {
+                            console.log(err)
+                            wepy.showModal({
+                                title: '提示',
+                                content: '服务器错误，请联系管理员'
+                            })
+                        }
+                    }
+                })
+            },
+            async updateGenderSelect() {
+                $wuxSelect('#wux-select--userGender').open({
+                    value: this.realNameAuth.gender,
+                    options: this.genderItems,
+                    onConfirm: async(value, index, options) => {
+                        console.log('onConfirm', value, index, options)
+                        if (index !== -1) {
+                            this.realNameAuth.gender_diff = options[index].title
+                            this.genderIndex = index
+                            this.realNameAuth.gender = value
+                            this.$apply()
+                        }
+                    },
+                })
+            },
+            async bindGetPhoneNumber(e) {
+                if (e.detail.encryptedData && e.detail.iv) {
+                    try {
+                        let bindResponse = await api.authRequest({
+                            url: 'weapp/user/bindPhoneNumber',
+                            method: 'PUT',
+                            data: {
+                                encryptedData: e.detail.encryptedData,
+                                iv: e.detail.iv
+                            }
+                        })
+                        if (bindResponse.statusCode === 200) {
+                            let user = bindResponse.data.data
+                            wepy.setStorageSync('user', user)
+                            this.realNameAuth = this.initRealNameAuth(user)
+                            this.$apply()
+                        }
+                    } catch (err) {
+                        console.log(err)
+                        wepy.showModal({
+                            title: '提示',
+                            content: '服务器错误，请联系管理员'
+                        })
+                    }
+                }
+            },
+            async submit() {
+                if (this.imageList.length) {
+                    let image_ids = []
+                    this.imageList.forEach(image => {
+                        image_ids.push(image.uid)
+                    });
+                    this.realNameAuth.image_ids = image_ids
+                    let response = await api.authRequest({
+                        url: 'user/realNameAuths',
+                        method: 'POST',
+                        data: this.realNameAuth
+                    })
+                    if(response.statusCode === 201){
+                        wepy.redirectTo({
+                            url:'/pages/realNameAuth/show'
+                        })
+                    }
+                    console.log(response)
+                } else {
+                    wepy.showToast({
+                        icon: 'none',
+                        title: '请上传认证照片'
+                    })
+                }
+            }
         }
     }
 </script>
