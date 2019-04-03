@@ -45,7 +45,8 @@
         'pages/users/edit',
         'pages/apply/create',
         'pages/realNameAuth/create',
-        'pages/realNameAuth/show'
+        'pages/realNameAuth/show',
+        'pages/errand/create',
       ],
       window: {
         backgroundTextStyle: 'light',
@@ -57,6 +58,11 @@
         list: [{
           pagePath: 'pages/position/index',
           text: '首页',
+          iconPath: 'images/index.png',
+          selectedIconPath: 'images/index_selected.png'
+        }, {
+          pagePath: 'pages/errand/create',
+          text: '跑腿',
           iconPath: 'images/index.png',
           selectedIconPath: 'images/index_selected.png'
         }, {

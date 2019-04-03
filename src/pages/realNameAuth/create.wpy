@@ -19,6 +19,7 @@
                 </wux-cell-group>
                 <wux-button bind:click="submit" block type="balanced">提交</wux-button>
             </wux-wing-blank>
+            <van-submit-bar price="{{ 3050 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
         </view>
     </view>
 </template>
@@ -41,6 +42,7 @@
                 'wux-button': '../../wux/button/index',
                 'wux-wing-blank': '../../wux/wing-blank/index',
                 'wux-upload': '../../wux/upload/index',
+                'van-submit-bar': '../../vant/submit-bar/index'
             }
         };
         data = {

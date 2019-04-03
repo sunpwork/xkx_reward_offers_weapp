@@ -1,0 +1,30 @@
+<template>
+    <view class="page">
+        <view class="page__bd">
+            <van-cell-group>
+                <van-field type="textarea" focus="{{ true }}" title-width="270px" placeholder="想让同学帮你干点什么..." size="large" />
+            </van-cell-group>
+            <van-submit-bar price="{{ 3050 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    export default class ErrandCreate extends wepy.page {
+        config = {
+            navigationBarTitleText: '发布跑腿',
+            usingComponents: {
+                'van-submit-bar': '../../vant/submit-bar/index',
+                'van-cell-group': '../../vant/cell-group/index',
+                'van-cell': '../../vant/cell/index',
+                'van-field': '../../vant/field/index',
+            }
+        };
+        data = {}
+        onLoad() {}
+        methods = {}
+    }
+</script>
+
