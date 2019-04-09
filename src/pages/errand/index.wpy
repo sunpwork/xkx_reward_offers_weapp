@@ -1,0 +1,19 @@
+<template>
+
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    export default class ErrandIndex extends wepy.page {
+        onShow() {
+            wepy.redirectTo({
+                url: "/pages/errand/create"
+            })
+        }
+    }
+</script>
+
+<style>
+
+</style>

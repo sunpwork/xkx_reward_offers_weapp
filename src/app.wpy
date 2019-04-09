@@ -46,8 +46,14 @@
         'pages/apply/create',
         'pages/realNameAuth/create',
         'pages/realNameAuth/show',
+        'pages/errand/index',
         'pages/errand/create',
       ],
+      permission: {
+        "scope.userLocation": {
+          "desc": "你的位置信息将用于小程序位置接口的效果展示"
+        }
+      },
       window: {
         backgroundTextStyle: 'light',
         navigationBarBackgroundColor: '#fff',
@@ -61,7 +67,7 @@
           iconPath: 'images/index.png',
           selectedIconPath: 'images/index_selected.png'
         }, {
-          pagePath: 'pages/errand/create',
+          pagePath: 'pages/errand/index',
           text: '跑腿',
           iconPath: 'images/index.png',
           selectedIconPath: 'images/index_selected.png'
