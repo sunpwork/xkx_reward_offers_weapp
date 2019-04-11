@@ -1,25 +1,32 @@
 <template>
-    <wux-select id="wux-select--genderLimit" />
+    <wux-select id="wux-select" />
+    <wux-dialog id="wux-dialog" />
     <view class="page">
         <view class="page__bd">
             <wux-cell-group>
                 <wux-cell hover-class="none">
-                    <wux-textarea rows="4" cursorSpacing="80" placeholder="想让同学帮你做些什么..." />
+                    <wux-textarea bind:change="contentChange" rows="4" cursorSpacing="80" placeholder="想让同学帮你做些什么..." />
                 </wux-cell>
             </wux-cell-group>
             <wux-white-space size="default" />
             <van-cell-group>
-                <van-cell bind:click="getLocation" title="出发地点" icon="location-o" is-link></van-cell>
-                <van-cell title="即刻出发" icon="clock-o" is-link></van-cell>
+                <van-cell bind:click="getLocation" title="{{ location.name ? location.name : '出发地点' }}" icon="location-o" is-link></van-cell>
+                <van-cell bind:click="appointmentTimeSelect" title="{{ appointmentTimeItems[appointmentTimeIndex] }}" icon="clock-o" is-link></van-cell>
             </van-cell-group>
             <wux-white-space size="default" />
             <van-cell-group>
                 <van-cell bind:click="genderLimitSelect" title="抢单限制" value="{{ genderLimitItems[genderLimitIndex].title }}" is-link></van-cell>
                 <van-cell title="跑腿费">
-                    <van-stepper value="{{ price }}" integer min="2" max="40" />
+                    <van-stepper bind:change="expenseChange" value="{{ expense }}" integer min="2" max="40" />
                 </van-cell>
             </van-cell-group>
-            <van-submit-bar price="{{ price * 100 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
+            <wux-white-space size="default" />
+            <wux-cell-group>
+                <wux-cell hover-class="none">
+                    <wux-textarea bind:change="hiddenContentChange" rows="3" cursorSpacing="80" placeholder="一些需要跑腿员接单后才能看到的信息（快递编号等）请在这里填写..." />
+                </wux-cell>
+            </wux-cell-group>
+            <van-submit-bar bind:submit="onSubmit" expense="{{ expense * 100 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
         </view>
     </view>
 </template>
@@ -28,7 +35,8 @@
     import wepy from 'wepy'
     import api from '@/utils/api'
     import {
-        $wuxSelect
+        $wuxSelect,
+        $wuxDialog
     } from '@/wux/index'
     export default class ErrandCreate extends wepy.page {
         config = {
@@ -40,6 +48,7 @@
                 'wux-textarea': '../../wux/textarea/index',
                 'wux-white-space': '../../wux/white-space/index',
                 'wux-select': '../../wux/select/index',
+                'wux-dialog': '../../wux/dialog/index',
                 'van-cell': '../../vant/cell/index',
                 'van-cell-group': '../../vant/cell-group/index',
                 'van-icon': '../../vant/icon/index',
@@ -47,7 +56,7 @@
             }
         }
         data = {
-            price: 2,
+            expense: 2,
             genderLimitItems: [{
                     'value': 'noLimit',
                     'title': '无性别限制'
@@ -60,12 +69,41 @@
                     'title': '限女生'
                 }
             ],
-            genderLimitIndex: 0
+            genderLimitIndex: 0,
+            location: {},
+            appointmentTimeItems: [],
+            appointmentTimeIndex: 0,
+            content: null,
+            hiddenContent: null
         }
-        onload() {}
+        onLoad() {
+            this.appointmentTimeItems = this.getAppointmentTimeItems()
+        }
+        getAppointmentTimeItems() {
+            let hours = new Date().getHours()
+            let minutes = new Date().getMinutes()
+            let times = []
+            // 取当前的整十分钟
+            let floorMinutes = Math.floor(minutes / 10 + 1) * 10
+            do {
+                if (floorMinutes >= 60) {
+                    hours += 1
+                    floorMinutes -= 60
+                }
+                if (hours < 24) {
+                    times.push(hours + ':' + (floorMinutes == 0 ? "00" : floorMinutes))
+                    floorMinutes += 30
+                }
+            } while (hours < 24)
+            let appointmentTimeItems = ['即刻出发']
+            for (let i = 1; i < times.length; i++) {
+                appointmentTimeItems.push(times[i - 1] + '-' + times[i])
+            }
+            return appointmentTimeItems
+        }
         methods = {
             genderLimitSelect() {
-                $wuxSelect('#wux-select--genderLimit').open({
+                $wuxSelect('#wux-select').open({
                     value: this.genderLimitItems[this.genderLimitIndex].value,
                     options: this.genderLimitItems,
                     onConfirm: (value, index, options) => {
@@ -77,17 +115,107 @@
                     },
                 })
             },
+            appointmentTimeSelect() {
+                $wuxSelect('#wux-select').open({
+                    value: this.appointmentTimeItems[this.appointmentTimeIndex],
+                    options: this.appointmentTimeItems,
+                    onConfirm: (value, index, options) => {
+                        console.log('onConfirm', value, index, options)
+                        if (index !== -1) {
+                            this.appointmentTimeIndex = index
+                            this.$apply()
+                        }
+                    },
+                })
+            },
             getLocation() {
-                wepy.authorize({
-                    scope: 'scope.userLocation',
-                    success:(e) => {
-                        wepy.chooseLocation({
-                            success(e) {
-                                console.log(e)
-                            }
+                wepy.chooseLocation().then(res => {
+                    console.log(res)
+                    let _this = this
+                    $wuxDialog().prompt({
+                        resetOnClose: true,
+                        title: '地址',
+                        content: '',
+                        fieldtype: 'text',
+                        password: false,
+                        defaultText: res.name,
+                        placeholder: '请输入地址',
+                        onConfirm(e, response) {
+                            _this.location.name = response
+                            _this.location.address = res.address
+                            _this.location.latitude = res.latitude
+                            _this.location.longitude = res.longitude
+                            _this.$apply()
+                        }
+                    })
+                })
+            },
+            expenseChange(e) {
+                this.expense = e.detail
+            },
+            contentChange(e) {
+                this.content = e.detail.value
+            },
+            hiddenContentChange(e) {
+                this.hiddenContent = e.detail.value
+            },
+            async onClickButton() {
+                if (!this.content) {
+                    wepy.showToast({
+                        title: '请填写内容',
+                        icon: 'none'
+                    })
+                    return
+                }
+                if(!this.location.name){
+                    wepy.showToast({
+                        title: '请选择出发地址',
+                        icon: 'none'
+                    })
+                    return
+                }                
+                let errand = {
+                    content: this.content,
+                    hidden_content: this.hiddenContent,
+                    appointment_time: this.appointmentTimeItems[this.appointmentTimeIndex],
+                    gender_limit: this.genderLimitItems[this.genderLimitIndex].value,
+                    expense: this.expense,
+                    location_name: this.location.name,
+                    location_address: this.location.address,
+                    location_latitude: this.location.latitude,
+                    location_longitude: this.location.longitude
+                }
+                try {
+                    let submitResponse = await api.authRequest({
+                        url: 'errands',
+                        method: 'POST',
+                        data: errand
+                    })
+                    if (submitResponse.statusCode === 201) {
+                        let payParms = submitResponse.data
+                        wepy.requestPayment({
+                            timeStamp: parseInt(new Date().getTime() / 1000) + '',
+                            signType: 'MD5',
+                            nonceStr: payParms.nonceStr,
+                            package: payParms.package,
+                            paySign: payParms.paySign                        
+                        })
+                    } else if (submitResponse.statusCode === 403) {
+                        wepy.showToast({
+                            title: submitResponse.data.message,
+                            icon: 'none'
                         })
                     }
-                })
+                    setTimeout(function() {
+                        wepy.navigateBack()
+                    }, 2000)
+                } catch (err) {
+                    console.log(err)
+                    wepy.showModal({
+                        title: '提示',
+                        content: '服务器错误，请联系管理员'
+                    })
+                }
             }
         }
     }
