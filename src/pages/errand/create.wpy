@@ -5,7 +5,13 @@
         <view class="page__bd">
             <wux-cell-group>
                 <wux-cell hover-class="none">
-                    <wux-textarea bind:change="contentChange" rows="4" cursorSpacing="80" placeholder="想让同学帮你做些什么..." />
+                    <wux-textarea bind:change="contentChange" rows="3" cursorSpacing="80" placeholder="想让同学帮你做些什么..." />
+                </wux-cell>
+            </wux-cell-group>
+            <wux-white-space size="default" />
+            <wux-cell-group>
+                <wux-cell hover-class="none">
+                    <wux-textarea bind:change="hiddenContentChange" rows="4" cursorSpacing="80" placeholder="快递取件信息等隐私信息请在这里填写..." />
                 </wux-cell>
             </wux-cell-group>
             <wux-white-space size="default" />
@@ -20,13 +26,7 @@
                     <van-stepper bind:change="expenseChange" value="{{ expense }}" integer min="2" max="40" />
                 </van-cell>
             </van-cell-group>
-            <wux-white-space size="default" />
-            <wux-cell-group>
-                <wux-cell hover-class="none">
-                    <wux-textarea bind:change="hiddenContentChange" rows="3" cursorSpacing="80" placeholder="一些需要跑腿员接单后才能看到的信息（快递编号等）请在这里填写..." />
-                </wux-cell>
-            </wux-cell-group>
-            <van-submit-bar bind:submit="onSubmit" expense="{{ expense * 100 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
+            <van-submit-bar bind:submit="onSubmit" price="{{ expense * 100 }}" button-text="提交订单" bind:submit="onClickButton" custom-class="van-submit-bar" safe-area-inset-bottom="{{ false }}" />
         </view>
     </view>
 </template>
@@ -167,13 +167,13 @@
                     })
                     return
                 }
-                if(!this.location.name){
+                if (!this.location.name) {
                     wepy.showToast({
                         title: '请选择出发地址',
                         icon: 'none'
                     })
                     return
-                }                
+                }
                 let errand = {
                     content: this.content,
                     hidden_content: this.hiddenContent,
@@ -192,23 +192,24 @@
                         data: errand
                     })
                     if (submitResponse.statusCode === 201) {
-                        let payParms = submitResponse.data
-                        wepy.requestPayment({
-                            timeStamp: parseInt(new Date().getTime() / 1000) + '',
-                            signType: 'MD5',
-                            nonceStr: payParms.nonceStr,
-                            package: payParms.package,
-                            paySign: payParms.paySign                        
-                        })
+                        let payParams = submitResponse.data
+                        let payResult = await wepy.requestPayment({
+                            timeStamp: payParams.timeStamp.toString(),
+                            signType: payParams.signType,
+                            nonceStr: payParams.nonceStr,
+                            package: payParams.package,
+                            paySign: payParams.paySign,
+                        }) 
+                        console.log(payResult)
                     } else if (submitResponse.statusCode === 403) {
                         wepy.showToast({
                             title: submitResponse.data.message,
                             icon: 'none'
                         })
                     }
-                    setTimeout(function() {
-                        wepy.navigateBack()
-                    }, 2000)
+                    // setTimeout(function() {
+                    //     wepy.navigateBack()
+                    // }, 2000)
                 } catch (err) {
                     console.log(err)
                     wepy.showModal({
