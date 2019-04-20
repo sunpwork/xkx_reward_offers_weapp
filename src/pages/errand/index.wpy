@@ -1,19 +1,51 @@
+<style>
+    .margin-right {
+        margin-right: 10px;
+    }
+    .content {
+        padding: 20px;
+        font-size: 16px;
+    }
+    .footer {
+        text-align: right;
+    }
+</style>
 <template>
-
+    <view class="page">
+        <view class="page__bd">
+            <van-panel title="北门菜鸟驿站" desc="17:20-17:50|限男生" status="待接单" use-footer-slot>
+                <view class="content">帮我拿快递送到4号楼535</view>
+                <view slot="footer" class="footer">
+                    <van-button size="small" class="margin-right">详情</van-button>
+                    <van-button size="small" type="danger">￥2</van-button>
+                </view>
+            </van-panel>
+            <van-panel title="北门菜鸟驿站" desc="17:20-17:50|限男生" status="待接单" use-footer-slot>
+                <view class="content">帮我拿快递送到4号楼535</view>
+                <view slot="footer" class="footer">
+                    <van-button size="small" class="margin-right">详情</van-button>
+                    <van-button size="small" type="danger">￥2</van-button>
+                </view>
+            </van-panel>
+        </view>
+    </view>
 </template>
 
 <script>
     import wepy from 'wepy'
     import api from '@/utils/api'
     export default class ErrandIndex extends wepy.page {
+        config = {
+            navigationBarTitleText: '跑腿',
+            usingComponents: {
+                'van-panel': '../../vant/panel/index',
+                'van-button': '../../vant/button/index',
+            }
+        }
         onShow() {
-            wepy.navigateTo({
-                url: "/pages/errand/create"
-            })
+            // wepy.navigateTo({
+            //     url: "/pages/errand/create"
+            // })
         }
     }
 </script>
-
-<style>
-
-</style>
