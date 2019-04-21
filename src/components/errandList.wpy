@@ -1,0 +1,108 @@
+<style>
+    .margin-right {
+        margin-right: 10px;
+    }
+    .content {
+        padding: 20px;
+        font-size: 16px;
+    }
+    .footer {
+        text-align: right;
+    }
+</style>
+
+<template>
+    <repeat for="{{ errands }}" wx:key="id" index="index" item="errand">
+        <van-panel title="{{ errand.location_name }}" desc="{{ errand.appointment_time }} | {{ genderLimitMap[errand.gender_limit].name }}" status="{{ statusMap[errand.status].name }}" use-footer-slot>
+            <view class="content">{{ errand.content }}</view>
+            <view slot="footer" class="footer">
+                <van-button size="small" class="margin-right">详情</van-button>
+                <van-button size="small" type="danger">￥{{ errand.expense }}</van-button>
+            </view>
+        </van-panel>
+    </repeat>
+    <view class="weui-loadmore weui-loadmore_line" wx:if="{{ noMoreData }}">
+        <view class="weui-loadmore__tips weui-loadmore__tips_in-line">没有更多数据</view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    export default class ErrandList extends wepy.component {
+        config = {
+        }
+        data = {
+            // 跑腿数据
+            errands: [],
+            statusMap: {},
+            genderLimitMap: {},
+            noMoreData: false,
+            isLoading: false
+        }
+        props = {
+            // 父页面传入，请求参数data
+            syncData: {
+                type: Object,
+                default: {}
+            },
+            // 父页面传入，请求url
+            syncUrl: {
+                type: String,
+                default: 'errands'
+            },
+            auth: {
+                type: Boolean,
+                default: false
+            }
+        }
+        async getErrands(reset = false) {
+            if (!this.syncData.page) {
+                this.syncData.page = 1
+            }
+            try {
+                let requestFun = api.request
+                if (this.auth) {
+                    requestFun = api.authRequest
+                }
+                let errandsResponse = await requestFun({
+                    url: this.syncUrl,
+                    data: this.syncData
+                })
+                let errands = errandsResponse.data.data
+                if (errandsResponse.statusCode === 200) {
+                    this.errands = reset ? errands : this.errands.concat(errands)
+                    this.statusMap = errandsResponse.data.meta.statusMap
+                    this.genderLimitMap = errandsResponse.data.meta.genderLimitMap
+                    let pagination = errandsResponse.data.meta.pagination
+                    if (pagination.current_page === pagination.total_pages) {
+                        this.noMoreData = true
+                    }
+                    this.$apply()
+                }
+                return errandsResponse
+            } catch (err) {
+                console.log(err)
+                wepy.showModal({
+                    title: '提示',
+                    content: '服务器错误，请联系管理员'
+                })
+            }
+        }
+        async loadMore() {
+            if (this.noMoreData || this.isLoading) {
+                return
+            }
+            this.isLoading = true
+            this.syncData.page = this.syncData.page + 1
+            await this.getErrands()
+            this.isLoading = false
+            this.$apply
+        }
+        async reload() {
+            this.noMoreData = false
+            this.syncData.page = 1
+            return await this.getErrands(true)
+        }
+    }
+</script>
