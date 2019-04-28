@@ -1,0 +1,128 @@
+<template>
+    <wux-fab-button position="bottomRight" theme="balanced" direction="horizontal" buttons="{{buttons}}" bind:click="fabButtonOnClick" />
+    <view class="page">
+        <view class="page__bd">
+            <wux-white-space size="default" />
+            <wux-cell-group title="用户">
+                <wux-cell hover-class="none">
+                    <wux-input label="姓名" placeholder="{{ user.name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="性别" placeholder="{{ genderMap[user.gender].name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="联系电话" placeholder="{{ user.phone }}" />
+                </wux-cell>
+            </wux-cell-group>
+            <wux-cell-group title="跑腿信息">
+                <wux-cell hover-class="none">
+                    <wux-input label="出发地点" placeholder="{{ errand.location_name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="出发时间" placeholder="{{ errand.appointment_time }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="性别限制" placeholder="{{ genderLimitMap[errand.gender_limit].name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="跑腿费" placeholder="{{ errand.expense }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-textarea rows="3" label="内容" placeholder="{{errand.content}}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-textarea rows="3" label="详细内容" placeholder="{{errand.hidden_content}}" />
+                </wux-cell>
+            </wux-cell-group>
+            <wux-cell-group wx:if='{{ operator }}' title="跑腿员">
+                <wux-cell hover-class="none">
+                    <wux-input label="姓名" placeholder="{{ operator.name }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="性别" placeholder="{{ operator.gender }}" />
+                </wux-cell>
+                <wux-cell hover-class="none">
+                    <wux-input label="联系电话" placeholder="{{ operator.tel }}" />
+                </wux-cell>
+            </wux-cell-group>
+        </view>
+    </view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    import api from '@/utils/api'
+    import util from '@/utils/util'
+    export default class ErrandShow extends wepy.page {
+        config = {
+            navigationBarTitleText: '详情',
+            usingComponents: {
+                'wux-cell-group': '../../wux/cell-group/index',
+                'wux-cell': '../../wux/cell/index',
+                'wux-input': '../../wux/input/index',
+                'wux-textarea': '../../wux/textarea/index',
+                'wux-white-space': '../../wux/white-space/index',
+            }
+        }
+        data = {
+            errand: null,
+            user: null,
+            operator: null,
+            genderLimitMap:{},
+            genderMap:{},
+            statusMap:{},
+        }
+        async getErrand(id) {
+            try {
+                let errandResponse = await api.authRequest({
+                    url: 'errands/' + id,
+                    data: {
+                        include: 'user,operator'
+                    }
+                })
+                if (errandResponse.statusCode === 200) {
+                    let errand = errandResponse.data.data
+                    errand.created_at_diff = util.diffForHumans(errand.created_at)
+                    this.errand = errand
+                    this.user = errand.user.data
+                    if (errand.operator) {
+                        this.operator = errand.operator.data
+                    }
+                    this.genderLimitMap = errandResponse.data.meta.genderLimitMap
+                    this.genderMap = errandResponse.data.meta.genderMap
+                    this.statusMap = errandResponse.data.meta.statusMap
+                    this.$apply()
+                } else if (positionResponse.statusCode === 404) {
+                    wepy.showToast({
+                        icon: 'none',
+                        title: '记录不存在'
+                    })
+                    wepy.navigateBack()
+                }
+                return errandResponse
+            } catch (err) {
+                console.log(err)
+                wepy.showModal({
+                    title: '提示',
+                    content: '服务器错误，请联系管理员'
+                })
+            }
+        }
+        async onLoad(options) {
+            this.getErrand(options.id)
+            let user = await this.$parent.getCurrentUser()
+            if (!user) {
+                wepy.switchTab({
+                    url: '/pages/users/me',
+                })
+            }
+        }
+        async onShow() {
+            if (this.errand) {
+                this.getErrand(this.errand.id)
+            }
+        }
+        onShareAppMessage() {}
+    }
+</script>
+

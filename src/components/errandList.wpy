@@ -16,8 +16,10 @@
         <van-panel title="{{ errand.location_name }}" desc="{{ errand.appointment_time }} | {{ genderLimitMap[errand.gender_limit].name }}" status="{{ statusMap[errand.status].name }}" use-footer-slot>
             <view class="content">{{ errand.content }}</view>
             <view slot="footer" class="footer">
-                <van-button size="small" class="margin-right">详情</van-button>
-                <van-button size="small" type="danger">￥{{ errand.expense }}</van-button>
+                <van-button bind:click="navigateToDetail" data-item="{{ errand }}" size="small" class="margin-right">详情</van-button>
+                <van-button wx:if="{{ errand.status == 'waitingPay' }}" bind:click="{{ errand.user.data.id == syncUser.id ? 'payErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status == 'pending' }}" bind:click="{{ errand.user.data.id != syncUser.id ? 'takeErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status == 'waitingService' }}" bind:click="{{ errand.user.data.id == syncUser.id ? 'doneErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">完成</van-button>
             </view>
         </van-panel>
     </repeat>
@@ -30,8 +32,7 @@
     import wepy from 'wepy'
     import api from '@/utils/api'
     export default class ErrandList extends wepy.component {
-        config = {
-        }
+        config = {}
         data = {
             // 跑腿数据
             errands: [],
@@ -44,12 +45,19 @@
             // 父页面传入，请求参数data
             syncData: {
                 type: Object,
-                default: {}
+                default: {
+                    
+                }
             },
             // 父页面传入，请求url
             syncUrl: {
                 type: String,
                 default: 'errands'
+            },
+            // 父页面传入，当前用户
+            syncUser: {
+                type: Object,
+                default:{}
             },
             auth: {
                 type: Boolean,
@@ -59,6 +67,9 @@
         async getErrands(reset = false) {
             if (!this.syncData.page) {
                 this.syncData.page = 1
+            }
+            if(!this.syncData.include){
+                this.syncData.include = 'user,operator'
             }
             try {
                 let requestFun = api.request
@@ -102,7 +113,89 @@
         async reload() {
             this.noMoreData = false
             this.syncData.page = 1
+            this.$apply;
             return await this.getErrands(true)
+        }
+        methods = {
+            async payErrand(e) {
+                let errand = e.currentTarget.dataset.item
+                let payResponse = await api.authRequest({
+                    url: 'errands/' + errand.id + '/pay',
+                    method: 'PUT'
+                })
+                console.log(payResponse)
+                if (payResponse.statusCode === 200) {
+                    let payParams = payResponse.data.payParams
+                    let errandId = payResponse.data.errandId
+                    try {
+                        let payResult = await wepy.requestPayment({
+                            timeStamp: payParams.timeStamp.toString(),
+                            signType: payParams.signType,
+                            nonceStr: payParams.nonceStr,
+                            package: payParams.package,
+                            paySign: payParams.paySign,
+                        })
+                        console.log(payResult)
+                    } catch (err) {
+                        console.log(err)
+                    } finally {
+                        await api.authRequest({
+                            url: 'errands/' + errandId + '/checkPaymentStatus',
+                            method: 'PUT',
+                        })
+                        this.reload()
+                    }
+                } else {
+                    wepy.showToast({
+                        title: payResponse.data.message,
+                        icon: 'none'
+                    })
+                }
+            },
+            async takeErrand(e) {
+                let errand = e.currentTarget.dataset.item
+                let takeResponse = await api.authRequest({
+                    url: 'errands/' + errand.id + '/take',
+                    method: 'PUT'
+                })
+                if (takeResponse.statusCode === 200) {
+                    wepy.showToast({
+                        icon: 'success',
+                        title: '操作成功！'
+                    })
+                    this.reload()
+                } else {
+                    wepy.showToast({
+                        title: takeResponse.data.message,
+                        icon: 'none'
+                    })
+                }
+            },
+            async doneErrand(e) {
+                let errand = e.currentTarget.dataset.item
+                let takeResponse = await api.authRequest({
+                    url: 'errands/' + errand.id + '/done',
+                    method: 'PUT'
+                })
+                if (takeResponse.statusCode === 200) {
+                    wepy.showToast({
+                        icon: 'success',
+                        title: '操作成功！'
+                    })
+                    this.reload()
+                } else {
+                    wepy.showToast({
+                        title: takeResponse.data.message,
+                        icon: 'none'
+                    })
+                }
+            },
+            navigateToDetail(e){
+                let errand = e.currentTarget.dataset.item
+                wepy.navigateTo({
+                    url:'/pages/errand/show?id=' + errand.id
+                })
+            }
         }
     }
 </script>

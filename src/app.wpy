@@ -48,6 +48,7 @@
         'pages/realNameAuth/show',
         'pages/errand/index',
         'pages/errand/create',
+        'pages/errand/show',
       ],
       permission: {
         "scope.userLocation": {
