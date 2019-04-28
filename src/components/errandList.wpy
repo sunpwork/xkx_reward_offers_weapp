@@ -31,6 +31,7 @@
 <script>
     import wepy from 'wepy'
     import api from '@/utils/api'
+    import errandApi from '@/pages/errand/errandApi'
     export default class ErrandList extends wepy.component {
         config = {}
         data = {
@@ -119,76 +120,18 @@
         methods = {
             async payErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                let payResponse = await api.authRequest({
-                    url: 'errands/' + errand.id + '/pay',
-                    method: 'PUT'
-                })
-                console.log(payResponse)
-                if (payResponse.statusCode === 200) {
-                    let payParams = payResponse.data.payParams
-                    let errandId = payResponse.data.errandId
-                    try {
-                        let payResult = await wepy.requestPayment({
-                            timeStamp: payParams.timeStamp.toString(),
-                            signType: payParams.signType,
-                            nonceStr: payParams.nonceStr,
-                            package: payParams.package,
-                            paySign: payParams.paySign,
-                        })
-                        console.log(payResult)
-                    } catch (err) {
-                        console.log(err)
-                    } finally {
-                        await api.authRequest({
-                            url: 'errands/' + errandId + '/checkPaymentStatus',
-                            method: 'PUT',
-                        })
-                        this.reload()
-                    }
-                } else {
-                    wepy.showToast({
-                        title: payResponse.data.message,
-                        icon: 'none'
-                    })
+                let payResult = errandApi.payErrand(errand)
+                if(payResult){
+                    this.reload()
                 }
             },
-            async takeErrand(e) {
+            async takeErrand(e){
                 let errand = e.currentTarget.dataset.item
-                let takeResponse = await api.authRequest({
-                    url: 'errands/' + errand.id + '/take',
-                    method: 'PUT'
-                })
-                if (takeResponse.statusCode === 200) {
-                    wepy.showToast({
-                        icon: 'success',
-                        title: '操作成功！'
-                    })
-                    this.reload()
-                } else {
-                    wepy.showToast({
-                        title: takeResponse.data.message,
-                        icon: 'none'
-                    })
-                }
+                errandApi.takeErrand(errand)
             },
             async doneErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                let takeResponse = await api.authRequest({
-                    url: 'errands/' + errand.id + '/done',
-                    method: 'PUT'
-                })
-                if (takeResponse.statusCode === 200) {
-                    wepy.showToast({
-                        icon: 'success',
-                        title: '操作成功！'
-                    })
-                    this.reload()
-                } else {
-                    wepy.showToast({
-                        title: takeResponse.data.message,
-                        icon: 'none'
-                    })
-                }
+                errandApi.doneErrand(errand)
             },
             navigateToDetail(e){
                 let errand = e.currentTarget.dataset.item

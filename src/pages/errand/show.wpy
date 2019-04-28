@@ -2,49 +2,34 @@
     <wux-fab-button position="bottomRight" theme="balanced" direction="horizontal" buttons="{{buttons}}" bind:click="fabButtonOnClick" />
     <view class="page">
         <view class="page__bd">
-            <wux-white-space size="default" />
-            <wux-cell-group title="用户">
-                <wux-cell hover-class="none">
-                    <wux-input label="姓名" placeholder="{{ user.name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="性别" placeholder="{{ genderMap[user.gender].name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="联系电话" placeholder="{{ user.phone }}" />
-                </wux-cell>
-            </wux-cell-group>
-            <wux-cell-group title="跑腿信息">
-                <wux-cell hover-class="none">
-                    <wux-input label="出发地点" placeholder="{{ errand.location_name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="出发时间" placeholder="{{ errand.appointment_time }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="性别限制" placeholder="{{ genderLimitMap[errand.gender_limit].name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="跑腿费" placeholder="{{ errand.expense }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-textarea rows="3" label="内容" placeholder="{{errand.content}}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-textarea rows="3" label="详细内容" placeholder="{{errand.hidden_content}}" />
-                </wux-cell>
-            </wux-cell-group>
-            <wux-cell-group wx:if='{{ operator }}' title="跑腿员">
-                <wux-cell hover-class="none">
-                    <wux-input label="姓名" placeholder="{{ operator.name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="性别" placeholder="{{ operator.gender }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="联系电话" placeholder="{{ operator.tel }}" />
-                </wux-cell>
-            </wux-cell-group>
+            <van-demo-block title="{{ statusMap[errand.status].name }}">
+                <van-cell-group>
+                    <van-cell bind:click="openLocation" title="出发地点" value="{{ errand.location_name }}" is-link></van-cell>
+                    <van-cell title="出发时间" value="{{ errand.appointment_time }}"></van-cell>
+                    <van-cell title="性别限制" value="{{ genderLimitMap[errand.gender_limit].name }}"></van-cell>
+                    <van-cell title="跑腿费" value="{{ errand.appointment_time }}"></van-cell>
+                    <van-cell title="类容" value="{{ errand.content }}"></van-cell>
+                    <van-cell wx:if="{{ errand.hidden_content }}" title="详细类容" value="{{ errand.hidden_content }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+            <van-demo-block title="用户">
+                <van-cell-group>
+                    <van-cell title="姓名" value="{{ user.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ genderMap[user.gender].name }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ user.phone }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+            <van-demo-block wx:if="{{ operator }}" title="跑腿员">
+                <van-cell-group>
+                    <van-cell title="姓名" value="{{ operator.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ genderMap[operator.gender].name }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ operator.phone }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+            <van-button wx:if="{{ errand.status == 'waitingPay' }}" bind:click="{{ errand.user.id == user.id ? 'payErrand' : ''}}" size="large" type="danger">支付</van-button>
+            <van-button wx:if="{{ errand.status == 'pending' && errand.user.data.id == user.id }}" bind:click="cancelErrand" size="large" type="danger">取消订单</van-button>
+            <van-button wx:if="{{ errand.status == 'pending' && errand.user.data.id != user.id }}" bind:click="takeErrand" size="large" type="primary">接单</van-button>
+            <van-button wx:if="{{ errand.status == 'waitingService' }}" bind:click="{{ errand.user.id == user.id ? 'doneErrand' : ''}}" size="large" type="primary">完成</van-button>
         </view>
     </view>
 </template>
@@ -57,20 +42,20 @@
         config = {
             navigationBarTitleText: '详情',
             usingComponents: {
-                'wux-cell-group': '../../wux/cell-group/index',
-                'wux-cell': '../../wux/cell/index',
-                'wux-input': '../../wux/input/index',
-                'wux-textarea': '../../wux/textarea/index',
                 'wux-white-space': '../../wux/white-space/index',
+                'van-cell-group': '../../vant/cell-group/index',
+                'van-cell': '../../vant/cell/index',
+                'van-button': '../../vant/button/index',
+                'van-demo-block': '../../vant/demo-block/index',
             }
         }
         data = {
             errand: null,
             user: null,
             operator: null,
-            genderLimitMap:{},
-            genderMap:{},
-            statusMap:{},
+            genderLimitMap: {},
+            genderMap: {},
+            statusMap: {},
         }
         async getErrand(id) {
             try {
@@ -116,6 +101,8 @@
                     url: '/pages/users/me',
                 })
             }
+            this.user = user
+            this.$apply()
         }
         async onShow() {
             if (this.errand) {
@@ -123,6 +110,16 @@
             }
         }
         onShareAppMessage() {}
+        methods = {
+            openLocation() {
+                wepy.openLocation({
+                    latitude: this.errand.location_latitude,
+                    longitude: this.errand.location_longitude,
+                    name: this.errand.location_name,
+                    address: this.errand.location_address
+                })
+            }
+        }
     }
 </script>
 
