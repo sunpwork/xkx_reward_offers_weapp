@@ -15,34 +15,24 @@
                     </view>
                 </view>
             </view>
-            <wux-white-space size="default" />
-            <wux-cell-group title="">
-                <wux-cell hover-class="none">
-                    <wux-input label="联系人" placeholder="{{ position.contact_man }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="人数" placeholder="{{ position.quantity }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="待遇" placeholder="{{ position.salary }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-textarea rows="3" label="地点" placeholder="{{position.work_address}}" />
-                </wux-cell>
-            </wux-cell-group>
-            <view wx:if="{{ applyRecord }}">
-                <wux-cell-group title="我的申请信息">
-                    <wux-cell hover-class="none">
-                        <wux-input label="姓名" placeholder="{{ applyRecord.name }}" />
-                    </wux-cell>
-                    <wux-cell hover-class="none">
-                        <wux-input label="性别" placeholder="{{ applyRecord.gender_diff }}" />
-                    </wux-cell>
-                    <wux-cell hover-class="none">
-                        <wux-input label="联系电话" placeholder="{{ applyRecord.phone }}" />
-                    </wux-cell>
-                </wux-cell-group>
-            </view>
+
+            <van-demo-block title="联系人">
+                <van-cell-group>
+                    <van-cell title="联系人" value="{{ position.contact_man }}"></van-cell>
+                    <van-cell title="人数" value="{{ position.quantity }}"></van-cell>
+                    <van-cell title="待遇" value="{{ position.salary }}"></van-cell>
+                    <van-cell title="地点" value="{{ position.work_address }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+
+            <van-demo-block wx:if="{{ applyRecord }}" title="我的申请信息">
+                <van-cell-group>
+                    <van-cell title="姓名" value="{{ applyRecord.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ applyRecord.gender_diff }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ applyRecord.phone }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+
         </view>
     </view>
 </template>
@@ -55,11 +45,9 @@
         config = {
             navigationBarTitleText: '详情',
             usingComponents: {
-                'wux-cell-group': '../../wux/cell-group/index',
-                'wux-cell': '../../wux/cell/index',
-                'wux-input': '../../wux/input/index',
-                'wux-textarea': '../../wux/textarea/index',
-                'wux-white-space': '../../wux/white-space/index',
+                'van-cell-group': '../../vant/cell-group/index',
+                'van-cell': '../../vant/cell/index',
+                'van-demo-block': '../../vant/demo-block/index',
                 'wux-fab-button': '../../wux/fab-button/index'
             }
         }

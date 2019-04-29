@@ -47,7 +47,6 @@ const takeErrand = async (errand) => {
             icon: 'success',
             title: '操作成功！'
         })
-        this.reload()
     } else {
         wepy.showToast({
             title: takeResponse.data.message,
@@ -67,7 +66,6 @@ const doneErrand = async (errand) => {
             icon: 'success',
             title: '操作成功！'
         })
-        this.reload()
     } else {
         wepy.showToast({
             title: takeResponse.data.message,
@@ -77,8 +75,28 @@ const doneErrand = async (errand) => {
     return doneErrand
 }
 
+const cancelErrand = async (errand) => {
+    let cancelResponse = await api.authRequest({
+        url: 'errands/' + errand.id + '/cancel',
+        method: 'PUT'
+    })
+    if (cancelResponse.statusCode === 200) {
+        wepy.showToast({
+            icon: 'success',
+            title: '操作成功！'
+        })
+    } else {
+        wepy.showToast({
+            title: cancelResponse.data.message,
+            icon: 'none'
+        })
+    }
+    return cancelResponse
+}
+
 export default {
     payErrand,
     takeErrand,
-    doneErrand
+    doneErrand,
+    cancelErrand
 }

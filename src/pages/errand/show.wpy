@@ -14,49 +14,50 @@
             </van-demo-block>
             <van-demo-block title="用户">
                 <van-cell-group>
-                    <van-cell title="姓名" value="{{ user.name }}"></van-cell>
-                    <van-cell title="性别" value="{{ genderMap[user.gender].name }}"></van-cell>
-                    <van-cell title="联系电话" value="{{ user.phone }}"></van-cell>
+                    <van-cell title="姓名" value="{{ errandUser.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ genderMap[errandUser.gender].name }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ errandUser.phone }}"></van-cell>
                 </van-cell-group>
             </van-demo-block>
             <van-demo-block wx:if="{{ operator }}" title="跑腿员">
                 <van-cell-group>
-                    <van-cell title="姓名" value="{{ operator.name }}"></van-cell>
-                    <van-cell title="性别" value="{{ genderMap[operator.gender].name }}"></van-cell>
-                    <van-cell title="联系电话" value="{{ operator.phone }}"></van-cell>
+                    <van-cell title="姓名" value="{{ errandOperator.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ genderMap[errandOperator.gender].name }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ errandOperator.phone }}"></van-cell>
                 </van-cell-group>
             </van-demo-block>
-            <van-button wx:if="{{ errand.status == 'waitingPay' }}" bind:click="{{ errand.user.id == user.id ? 'payErrand' : ''}}" size="large" type="danger">支付</van-button>
-            <van-button wx:if="{{ errand.status == 'pending' && errand.user.data.id == user.id }}" bind:click="cancelErrand" size="large" type="danger">取消订单</van-button>
-            <van-button wx:if="{{ errand.status == 'pending' && errand.user.data.id != user.id }}" bind:click="takeErrand" size="large" type="primary">接单</van-button>
-            <van-button wx:if="{{ errand.status == 'waitingService' }}" bind:click="{{ errand.user.id == user.id ? 'doneErrand' : ''}}" size="large" type="primary">完成</van-button>
+            <van-button wx:if="{{ errand.status === 'waitingPay' && errandUser.id === user.id }}" bind:click="payErrand" size="large " type="danger ">支付</van-button>
+            <van-button wx:if="{{ errand.status ==='pending' && errandUser.id === user.id }}" bind:click="cancelErrand" size="large" type="danger ">取消订单</van-button>
+            <van-button wx:if="{{ errand.status === 'pending' && errandUser.id != user.id }}" bind:click="takeErrand" size="large" type="primary ">接单</van-button>
+            <van-button wx:if="{{ errand.status === 'waitingService' && errandUser.id === user.id  }}" bind:click="doneErrand" size="large " type="primary ">完成</van-button>
         </view>
     </view>
 </template>
 
 <script>
-    import wepy from 'wepy'
-    import api from '@/utils/api'
-    import util from '@/utils/util'
+    import wepy from 'wepy';
+    import api from '@/utils/api';
+    import util from '@/utils/util';
+    import errandApi from './errandApi';
     export default class ErrandShow extends wepy.page {
         config = {
             navigationBarTitleText: '详情',
             usingComponents: {
-                'wux-white-space': '../../wux/white-space/index',
                 'van-cell-group': '../../vant/cell-group/index',
                 'van-cell': '../../vant/cell/index',
                 'van-button': '../../vant/button/index',
-                'van-demo-block': '../../vant/demo-block/index',
+                'van-demo-block': '../../vant/demo-block/index'
             }
-        }
+        };
         data = {
+            user:null,
             errand: null,
-            user: null,
-            operator: null,
+            errandUser: null,
+            errandOperator: null,
             genderLimitMap: {},
             genderMap: {},
-            statusMap: {},
-        }
+            statusMap: {}
+        };
         async getErrand(id) {
             try {
                 let errandResponse = await api.authRequest({
@@ -64,49 +65,49 @@
                     data: {
                         include: 'user,operator'
                     }
-                })
+                });
                 if (errandResponse.statusCode === 200) {
-                    let errand = errandResponse.data.data
-                    errand.created_at_diff = util.diffForHumans(errand.created_at)
-                    this.errand = errand
-                    this.user = errand.user.data
+                    let errand = errandResponse.data.data;
+                    errand.created_at_diff = util.diffForHumans(errand.created_at);
+                    this.errand = errand;
+                    this.errandUser = errand.user.data;
                     if (errand.operator) {
-                        this.operator = errand.operator.data
+                        this.errandOperator = errand.operator.data;
                     }
-                    this.genderLimitMap = errandResponse.data.meta.genderLimitMap
-                    this.genderMap = errandResponse.data.meta.genderMap
-                    this.statusMap = errandResponse.data.meta.statusMap
-                    this.$apply()
+                    this.genderLimitMap = errandResponse.data.meta.genderLimitMap;
+                    this.genderMap = errandResponse.data.meta.genderMap;
+                    this.statusMap = errandResponse.data.meta.statusMap;
+                    this.$apply();
                 } else if (positionResponse.statusCode === 404) {
                     wepy.showToast({
                         icon: 'none',
                         title: '记录不存在'
-                    })
-                    wepy.navigateBack()
+                    });
+                    wepy.navigateBack();
                 }
-                return errandResponse
+                return errandResponse;
             } catch (err) {
-                console.log(err)
+                console.log(err);
                 wepy.showModal({
                     title: '提示',
                     content: '服务器错误，请联系管理员'
-                })
+                });
             }
         }
         async onLoad(options) {
-            this.getErrand(options.id)
-            let user = await this.$parent.getCurrentUser()
+            this.getErrand(options.id);
+            let user = await this.$parent.getCurrentUser();
             if (!user) {
                 wepy.switchTab({
-                    url: '/pages/users/me',
-                })
+                    url: '/pages/users/me'
+                });
             }
-            this.user = user
-            this.$apply()
+            this.user = user;
+            this.$apply();
         }
         async onShow() {
             if (this.errand) {
-                this.getErrand(this.errand.id)
+                this.getErrand(this.errand.id);
             }
         }
         onShareAppMessage() {}
@@ -117,9 +118,41 @@
                     longitude: this.errand.location_longitude,
                     name: this.errand.location_name,
                     address: this.errand.location_address
-                })
+                });
+            },
+            async payErrand() {
+                let payResult = await errandApi.payErrand(this.errand);
+                if (payResult) {
+                    wepy.showToast({
+                        icon: 'success',
+                        title: '支付成功'
+                    });
+                    wepy.navigateBack();
+                }
+            },
+            async cancelErrand() {
+                let cacnelResponse = await errandApi.cancelErrand(this.errand)
+                if (cacnelResponse.statusCode == 200) {
+                    wepy.showToast({
+                        icon: 'success',
+                        title: '操作成功'
+                    });
+                    wepy.navigateBack();
+                }
+            },
+            async takeErrand() {
+                let takeResponse = await errandApi.takeErrand(this.errand)
+                if (takeResponse.statusCode == 200) {
+                    wepy.showToast({
+                        icon: 'success',
+                        title: '操作成功'
+                    });
+                    this.onLoad({
+                        id: this.errand.id
+                    })
+                }
             }
-        }
+        };
     }
 </script>
 

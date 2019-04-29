@@ -46,6 +46,10 @@
             this.user = await this.$parent.getCurrentUser()
             this.$apply()
         }
+        async onShow(){
+            this.$invoke('errandlist', 'reload')
+            this.$apply()
+        }
         async onPullDownRefresh() {
             await this.$invoke('errandlist', 'reload')
             wepy.stopPullDownRefresh()

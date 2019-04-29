@@ -17,9 +17,9 @@
             <view class="content">{{ errand.content }}</view>
             <view slot="footer" class="footer">
                 <van-button bind:click="navigateToDetail" data-item="{{ errand }}" size="small" class="margin-right">详情</van-button>
-                <van-button wx:if="{{ errand.status == 'waitingPay' }}" bind:click="{{ errand.user.data.id == syncUser.id ? 'payErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">￥{{ errand.expense }}</van-button>
-                <van-button wx:if="{{ errand.status == 'pending' }}" bind:click="{{ errand.user.data.id != syncUser.id ? 'takeErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">￥{{ errand.expense }}</van-button>
-                <van-button wx:if="{{ errand.status == 'waitingService' }}" bind:click="{{ errand.user.data.id == syncUser.id ? 'doneErrand' : ''}}" data-item="{{ errand }}" size="small" type="danger">完成</van-button>
+                <van-button wx:if="{{ errand.status === 'waitingPay' && errand.user.data.id == user.id }}" bind:click="payErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status === 'pending' && rrand.user.data.id != syncUser.id }}" bind:click="takeErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status == 'waitingService' && errand.user.data.id == syncUser.id }}" bind:click="doneErrand" data-item="{{ errand }}" size="small" type="danger">完成</van-button>
             </view>
         </van-panel>
     </repeat>
@@ -46,9 +46,7 @@
             // 父页面传入，请求参数data
             syncData: {
                 type: Object,
-                default: {
-                    
-                }
+                default: {}
             },
             // 父页面传入，请求url
             syncUrl: {
@@ -58,7 +56,7 @@
             // 父页面传入，当前用户
             syncUser: {
                 type: Object,
-                default:{}
+                default: {}
             },
             auth: {
                 type: Boolean,
@@ -69,7 +67,7 @@
             if (!this.syncData.page) {
                 this.syncData.page = 1
             }
-            if(!this.syncData.include){
+            if (!this.syncData.include) {
                 this.syncData.include = 'user,operator'
             }
             try {
@@ -120,23 +118,28 @@
         methods = {
             async payErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                let payResult = errandApi.payErrand(errand)
-                if(payResult){
+                let payResult = await errandApi.payErrand(errand)
+                if (payResult) {
                     this.reload()
                 }
             },
-            async takeErrand(e){
+            async takeErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                errandApi.takeErrand(errand)
+                let takeResponse = errandApi.takeErrand(errand)
+                if (takeResponse.statusCode == 200) {
+                    wepy.navigateTo({
+                        url: '/pages/errand/show?id=' + errand.id
+                    })
+                }
             },
             async doneErrand(e) {
                 let errand = e.currentTarget.dataset.item
                 errandApi.doneErrand(errand)
             },
-            navigateToDetail(e){
+            navigateToDetail(e) {
                 let errand = e.currentTarget.dataset.item
                 wepy.navigateTo({
-                    url:'/pages/errand/show?id=' + errand.id
+                    url: '/pages/errand/show?id=' + errand.id
                 })
             }
         }

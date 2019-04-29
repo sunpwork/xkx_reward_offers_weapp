@@ -1,36 +1,22 @@
 <template>
     <view class="page">
         <view class="page__bd">
-            <wux-white-space size="default" />
-            <wux-alert wx:if="{{ realNameAuth.status === 'active' }}" theme="balanced">
-                <wux-icon wux-class="thumb" type="ios-checkmark-circle-outline" size="20" color="#fff" slot="header" />
-                <text>审核通过</text>
-            </wux-alert>
-            <wux-alert wx:if="{{ realNameAuth.status === 'pending' }}" theme="energized">
-                <wux-icon wux-class="thumb" type="ios-alert" size="20" color="#fff" slot="header" />
-                <text>待审核</text>
-            </wux-alert>
-            <wux-alert wx:if="{{ realNameAuth.status === 'invalid' }}" theme="assertive">
-                <wux-icon wux-class="thumb" type="ios-close-circle-outline" size="20" color="#fff" slot="header" />
-                <text>未通过</text>
-            </wux-alert>
-            <wux-cell-group title="我的实名信息">
-                <wux-cell hover-class="none">
-                    <wux-input label="姓名" placeholder="{{ realNameAuth.name }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="性别" placeholder="{{ realNameAuth.gender_diff }}" />
-                </wux-cell>
-                <wux-cell hover-class="none">
-                    <wux-input label="联系电话" placeholder="{{ realNameAuth.phone }}" />
-                </wux-cell>
-            </wux-cell-group>
-            <wux-cell-group title="实名照片">
+
+            <van-demo-block title="{{ statusMap[realNameAuth.status].name }}">
+                <van-cell-group>
+                    <van-cell title="姓名" value="{{ realNameAuth.name }}"></van-cell>
+                    <van-cell title="性别" value="{{ realNameAuth.gender }}"></van-cell>
+                    <van-cell title="联系电话" value="{{ realNameAuth.phone }}"></van-cell>
+                </van-cell-group>
+            </van-demo-block>
+            <van-demo-block title="实名照片">
+                <van-cell-group>
                 <repeat for="{{ realNameAuth.realNameAuthImages.data }}" wx:key="id" index="index" item="realNameAuthImage">
                     <image src="{{ realNameAuthImage.url }}" mode="widthFix" />
                 </repeat>
-            </wux-cell-group>
-            <wux-button wx:if="{{ realNameAuth.status === 'invalid' }}" bind:click="resubmit" block type="assertive">重新提交</wux-button>
+                <van-cell-group>
+            </van-demo-block>
+            <van-button wx:if="{{ realNameAuth.status === 'invalid' }}" bind:click="resubmit" size="large" type="danger">重新提交</van-button>
         </view>
     </view>
 </template>
@@ -43,19 +29,15 @@
         config = {
             navigationBarTitleText: '实名认证',
             usingComponents: {
-                'wux-cell-group': '../../wux/cell-group/index',
-                'wux-cell': '../../wux/cell/index',
-                'wux-input': '../../wux/input/index',
-                'wux-textarea': '../../wux/textarea/index',
-                'wux-button': '../../wux/button/index',
-                'wux-white-space': '../../wux/white-space/index',
-                'wux-fab-button': '../../wux/fab-button/index',
-                'wux-alert': '../../wux/alert/index',
-                'wux-icon': '../../wux/icon/index',
+                'van-cell-group': '../../vant/cell-group/index',
+                'van-cell': '../../vant/cell/index',
+                'van-button': '../../vant/button/index',
+                'van-demo-block': '../../vant/demo-block/index'
             }
         }
         data = {
-            realNameAuth: null
+            realNameAuth: null,
+            statusMap:{},
         }
         async onLoad() {
             let response = await api.authRequest({
@@ -67,6 +49,7 @@
             })
             if (response.statusCode === 200) {
                 this.realNameAuth = response.data.data
+                this.statusMap = response.data.meta.statusMap
                 this.realNameAuth.gender_diff = this.$parent.globalData.genderMap[this.realNameAuth.gender]
                 this.$apply()
             }
