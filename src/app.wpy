@@ -49,6 +49,7 @@
         'pages/errand/index',
         'pages/errand/create',
         'pages/errand/show',
+        'pages/errand/myIndex',
       ],
       permission: {
         "scope.userLocation": {
@@ -70,8 +71,8 @@
         }, {
           pagePath: 'pages/errand/index',
           text: '跑腿',
-          iconPath: 'images/index.png',
-          selectedIconPath: 'images/index_selected.png'
+          iconPath: 'images/running.png',
+          selectedIconPath: 'images/running_selected.png'
         }, {
           pagePath: 'pages/users/me',
           text: '我的',

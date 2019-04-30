@@ -47,11 +47,16 @@
                     include: 'realNameAuthImages'
                 }
             })
+            console.log(response)
             if (response.statusCode === 200) {
                 this.realNameAuth = response.data.data
                 this.statusMap = response.data.meta.statusMap
                 this.realNameAuth.gender_diff = this.$parent.globalData.genderMap[this.realNameAuth.gender]
                 this.$apply()
+            }else if(response.statusCode === 404) {
+                wepy.redirectTo({
+                    url: '/pages/realNameAuth/create'
+                })
             }
         }
         methods = {

@@ -57,18 +57,18 @@ const takeErrand = async (errand) => {
 }
 
 const doneErrand = async (errand) => {
-    let takeResponse = await api.authRequest({
+    let doneErrand = await api.authRequest({
         url: 'errands/' + errand.id + '/done',
         method: 'PUT'
     })
-    if (takeResponse.statusCode === 200) {
+    if (doneErrand.statusCode === 200) {
         wepy.showToast({
             icon: 'success',
             title: '操作成功！'
         })
     } else {
         wepy.showToast({
-            title: takeResponse.data.message,
+            title: doneErrand.data.message,
             icon: 'none'
         })
     }

@@ -55,6 +55,9 @@ const getToken = async (options) => {
   let accessToken = wepy.getStorageSync('access_token')
   let expiredAt = wepy.getStorageSync('access_token_expired_at')
 
+  console.log(accessToken)
+  console.log(expiredAt)
+
   // 如果token过期了，则调用刷新方法
   if (accessToken && new Date().getTime() > expiredAt) {
     let refreshResponse = await refreshToken(accessToken)

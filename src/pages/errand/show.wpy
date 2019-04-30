@@ -19,7 +19,7 @@
                     <van-cell title="联系电话" value="{{ errandUser.phone }}"></van-cell>
                 </van-cell-group>
             </van-demo-block>
-            <van-demo-block wx:if="{{ operator }}" title="跑腿员">
+            <van-demo-block wx:if="{{ errandOperator }}" title="跑腿员">
                 <van-cell-group>
                     <van-cell title="姓名" value="{{ errandOperator.name }}"></van-cell>
                     <van-cell title="性别" value="{{ genderMap[errandOperator.gender].name }}"></van-cell>
@@ -50,7 +50,7 @@
             }
         };
         data = {
-            user:null,
+            user: null,
             errand: null,
             errandUser: null,
             errandOperator: null,
@@ -133,20 +133,21 @@
             async cancelErrand() {
                 let cacnelResponse = await errandApi.cancelErrand(this.errand)
                 if (cacnelResponse.statusCode == 200) {
-                    wepy.showToast({
-                        icon: 'success',
-                        title: '操作成功'
-                    });
                     wepy.navigateBack();
                 }
             },
             async takeErrand() {
                 let takeResponse = await errandApi.takeErrand(this.errand)
                 if (takeResponse.statusCode == 200) {
-                    wepy.showToast({
-                        icon: 'success',
-                        title: '操作成功'
-                    });
+                    this.onLoad({
+                        id: this.errand.id
+                    })
+                }
+            },
+            async doneErrand() {
+                let doneResonse = await errandApi.doneErrand(this.errand)
+                console.log(doneResonse)
+                if (doneResonse.statusCode == 200) {
                     this.onLoad({
                         id: this.errand.id
                     })

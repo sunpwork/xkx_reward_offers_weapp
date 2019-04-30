@@ -210,7 +210,9 @@
                                 url:'errands/' + errandId + '/checkPaymentStatus',
                                 method:'PUT',                                
                             })
-                            wepy.navigateBack()
+                            wepy.redirectTo({
+                                url:'/pages/errand/show?id=' + errandId
+                            })
                         }
                     } else if (submitResponse.statusCode === 403) {
                         wepy.showToast({

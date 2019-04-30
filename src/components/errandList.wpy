@@ -17,9 +17,9 @@
             <view class="content">{{ errand.content }}</view>
             <view slot="footer" class="footer">
                 <van-button bind:click="navigateToDetail" data-item="{{ errand }}" size="small" class="margin-right">详情</van-button>
-                <van-button wx:if="{{ errand.status === 'waitingPay' && errand.user.data.id == user.id }}" bind:click="payErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
-                <van-button wx:if="{{ errand.status === 'pending' && rrand.user.data.id != syncUser.id }}" bind:click="takeErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
-                <van-button wx:if="{{ errand.status == 'waitingService' && errand.user.data.id == syncUser.id }}" bind:click="doneErrand" data-item="{{ errand }}" size="small" type="danger">完成</van-button>
+                <van-button wx:if="{{ errand.status === 'waitingPay' && errand.user.data.id == syncUser.id }}" bind:click="payErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status === 'pending' && errand.user.data.id != syncUser.id }}" bind:click="takeErrand" data-item="{{ errand }}" size="small" type="danger ">￥{{ errand.expense }}</van-button>
+                <van-button wx:if="{{ errand.status === 'waitingService' && errand.user.data.id == syncUser.id }}" bind:click="doneErrand" data-item="{{ errand }}" size="small" type="danger">完成</van-button>
             </view>
         </van-panel>
     </repeat>
@@ -125,16 +125,23 @@
             },
             async takeErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                let takeResponse = errandApi.takeErrand(errand)
+                let takeResponse = await errandApi.takeErrand(errand)
                 if (takeResponse.statusCode == 200) {
                     wepy.navigateTo({
                         url: '/pages/errand/show?id=' + errand.id
+                    })
+                } else if (takeResponse.statusCode == 403) {
+                    wepy.navigateTo({
+                        url:'/pages/realNameAuth/show'
                     })
                 }
             },
             async doneErrand(e) {
                 let errand = e.currentTarget.dataset.item
-                errandApi.doneErrand(errand)
+                let doneResponse = await errandApi.doneErrand(errand)
+                if(doneResponse.statusCode == 200){
+                    this.reload()
+                }
             },
             navigateToDetail(e) {
                 let errand = e.currentTarget.dataset.item

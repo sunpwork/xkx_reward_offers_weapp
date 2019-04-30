@@ -25,10 +25,12 @@
             }
         }
         data = {
-            requestData: {},
+            requestData: {
+                status :'pending'
+            },
             user:null,
             buttons: [{
-                    label: '在线报名',
+                    label: '发布跑腿',
                     icon: '/images/edit.png',
                 },
                 {

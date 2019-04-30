@@ -22,8 +22,11 @@
       <wux-cell-group title="" label="">
         <wux-cell wx:if="{{ user }}" title="个人信息" is-link url="/pages/users/edit"></wux-cell>
         <wux-cell wx:else title="个人信息" is-link open-type="getUserInfo" bind:getuserinfo="bindGetUserInfo" extra="未绑定"></wux-cell>
-        <wux-cell title="我的申请" is-link url="{{ user? '/pages/position/userIndex' : '' }}"></wux-cell>
-        <wux-cell title="实名认证" is-link url="{{ user? (user.real_name_auth ? '/pages/realNameAuth/show' : '/pages/realNameAuth/create') : '' }}"></wux-cell>        
+        <block wx:if="{{ user }}">
+          <wux-cell title="我的申请" is-link url="/pages/position/userIndex"></wux-cell>
+          <wux-cell title="实名认证" is-link url="/pages/realNameAuth/show"></wux-cell>
+          <wux-cell title="我的跑腿" is-link url="/pages/errand/myIndex"></wux-cell>
+        </block>
       </wux-cell-group>
     </view>
   </view>
